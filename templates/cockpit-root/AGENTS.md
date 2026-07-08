@@ -1,0 +1,5 @@
+- This is a Cockpit Kit-compatible local knowledge repo.
+- Load the global Cockpit Kit skill.
+- Do not use ambient git.
+- Resolve root through config.
+- Treat the repo as private unless the operator says otherwise.

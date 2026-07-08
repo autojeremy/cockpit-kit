@@ -1,0 +1,11 @@
+[[nav]]
+label = "Inbox"
+href = "inbox/"
+
+[[nav]]
+label = "Search"
+href = "search/"
+
+[[nav]]
+label = "Design System"
+href = "design-system.html"

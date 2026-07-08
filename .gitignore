@@ -1,0 +1,21 @@
+# Local/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+
+# JavaScript tooling output, if contributors use local tooling
+node_modules/
+coverage/
+.nyc_output/
+
+# Generated local scratch/output
+.tmp/
+tmp/
+*.log

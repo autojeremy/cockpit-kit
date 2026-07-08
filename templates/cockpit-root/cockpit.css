@@ -1,0 +1,81 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f7f4ed;
+  --panel: #fffaf0;
+  --ink: #24211d;
+  --muted: #6f665b;
+  --line: #ded4c5;
+  --accent: #305cde;
+  --accent-soft: #e6ecff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top left, #fff8df, var(--bg) 34rem);
+  color: var(--ink);
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+  line-height: 1.6;
+}
+
+a { color: var(--accent); }
+
+.shell {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+nav a {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel), transparent 12%);
+  padding: 0.45rem 0.75rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+nav a[aria-current="page"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+main {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.hero, .card {
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--panel), transparent 8%);
+  padding: clamp(1rem, 4vw, 2rem);
+  box-shadow: 0 1rem 2.5rem rgb(36 33 29 / 0.07);
+}
+
+h1, h2, h3 { line-height: 1.15; }
+h1 { font-size: clamp(2rem, 8vw, 4.5rem); margin: 0 0 1rem; }
+h2 { margin: 0 0 0.5rem; }
+p { margin: 0 0 1rem; }
+ul { margin-top: 0; }
+
+.muted { color: var(--muted); }
+.grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.search-box { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+input[type="search"] { flex: 1 1 14rem; border: 1px solid var(--line); border-radius: 0.75rem; padding: 0.75rem; font: inherit; }
+button { border: 0; border-radius: 0.75rem; background: var(--accent); color: white; padding: 0.75rem 1rem; font: inherit; cursor: pointer; }
+
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #171512; --panel: #211e1a; --ink: #f2eadb; --muted: #b9aa99; --line: #3a342d; --accent: #9db5ff; --accent-soft: #1d2a52; }
+  body { background: radial-gradient(circle at top left, #2b2618, var(--bg) 34rem); }
+}

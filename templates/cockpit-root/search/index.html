@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="cockpit:source" content="self">
+  <meta name="cockpit:rendered-at" content="2026-07-05T18:00:00Z">
+  <title>Search</title>
+  <link rel="stylesheet" href="../cockpit.css">
+</head>
+<body>
+  <div class="shell">
+    <nav aria-label="Primary">
+      <a href="../">Cockpit</a>
+      <a href="../inbox/">Inbox</a>
+      <a href="./" aria-current="page">Search</a>
+      <a href="../design-system.html">Design System</a>
+    </nav>
+    <main>
+      <section class="hero">
+        <p class="muted">Static local search</p>
+        <h1>Search</h1>
+        <form class="search-box" id="search-form">
+          <input id="q" name="q" type="search" autocomplete="off" placeholder="Search local pages" aria-label="Search local pages">
+          <button type="submit">Search</button>
+        </form>
+      </section>
+      <section class="card" id="status">Loading search index...</section>
+      <section class="grid" id="results" aria-live="polite"></section>
+    </main>
+  </div>
+  <script type="application/json" id="cockpit-data">{"kind":"cockpit-search","schema_version":1,"summary":"Starter browser search page."}</script>
+  <script>
+    const form = document.querySelector('#search-form');
+    const input = document.querySelector('#q');
+    const statusBox = document.querySelector('#status');
+    const results = document.querySelector('#results');
+    const params = new URLSearchParams(location.search);
+    let index = null;
+
+    input.value = params.get('q') || '';
+
+    const terms = (value) => value.toLowerCase().split(/\s+/).filter(Boolean);
+    const textOf = (page) => [page.title, page.section, page.summary, page.text, ...(page.headings || []).map((heading) => heading.text)].join(' ').toLowerCase();
+    const score = (page, queryTerms) => queryTerms.reduce((total, term) => {
+      if (page.title.toLowerCase().includes(term)) return total + 10;
+      if ((page.headings || []).some((heading) => heading.text.toLowerCase().includes(term))) return total + 6;
+      if ((page.section || '').toLowerCase().includes(term)) return total + 4;
+      if ((page.text || '').toLowerCase().includes(term)) return total + 1;
+      return total;
+    }, 0);
+
+    const render = () => {
+      const queryTerms = terms(input.value);
+      results.replaceChildren();
+      if (!index || !Array.isArray(index.pages) || index.pages.length === 0) {
+        statusBox.textContent = 'No search index entries yet. Run `node scripts/search-index.mjs` from Cockpit Kit after pages exist.';
+        return;
+      }
+      if (queryTerms.length === 0) {
+        statusBox.textContent = `Search ${index.page_count} indexed page(s).`;
+        return;
+      }
+      const matches = index.pages
+        .filter((page) => queryTerms.every((term) => textOf(page).includes(term)))
+        .map((page) => ({ page, score: score(page, queryTerms) }))
+        .sort((a, b) => b.score - a.score || a.page.title.localeCompare(b.page.title))
+        .slice(0, 24);
+      statusBox.textContent = `${matches.length} result(s) for "${input.value}".`;
+      for (const match of matches) {
+        const card = document.createElement('article');
+        card.className = 'card';
+        const title = document.createElement('h2');
+        const link = document.createElement('a');
+        link.href = match.page.href;
+        link.textContent = match.page.title;
+        title.append(link);
+        const summary = document.createElement('p');
+        summary.textContent = match.page.summary || match.page.section || match.page.path;
+        card.append(title, summary);
+        results.append(card);
+      }
+    };
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const url = new URL(location.href);
+      if (input.value.trim()) url.searchParams.set('q', input.value.trim());
+      else url.searchParams.delete('q');
+      history.replaceState(null, '', url);
+      render();
+    });
+
+    fetch('/.cockpit/search-index.json', { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((payload) => { index = payload; render(); })
+      .catch((error) => { statusBox.textContent = `Search index unavailable: ${error.message}. Run search-index.mjs, then serve this repo over HTTP.`; });
+  </script>
+</body>
+</html>
