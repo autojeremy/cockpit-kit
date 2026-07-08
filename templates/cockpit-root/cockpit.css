@@ -206,6 +206,7 @@ h2.section::before {
   border-color: var(--ink-soft);
   box-shadow: inset 2px 0 0 var(--accent);
 }
+.card h2,
 .card h3 {
   font-size: 16px; margin: 0 0 4px; font-weight: 600;
   font-family: var(--mono); letter-spacing: 0;
