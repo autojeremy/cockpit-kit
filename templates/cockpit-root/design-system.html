@@ -9,25 +9,86 @@
   <link rel="stylesheet" href="./cockpit.css">
 </head>
 <body>
-  <div class="shell">
-    <nav aria-label="Primary">
-      <a href="./">Cockpit</a>
-      <a href="inbox/">Inbox</a>
-      <a href="search/">Search</a>
-      <a href="design-system.html" aria-current="page">Design System</a>
-    </nav>
-    <main>
-      <section class="hero">
-        <p class="muted">User-owned visual system</p>
-        <h1>Design System</h1>
-        <p>This copied page and stylesheet belong to the knowledge repo. Change them freely.</p>
-      </section>
-      <section class="grid">
-        <article class="card"><h2>Cards</h2><p>Use cards for grouped local context and lightweight dashboards.</p></article>
-        <article class="card"><h2>Typography</h2><p>The starter uses system serif headings with system sans navigation.</p></article>
-      </section>
-    </main>
-  </div>
-  <script type="application/json" id="cockpit-data">{"kind":"cockpit-design-system","schema_version":1,"summary":"Starter design system page for user-owned styling."}</script>
+  <nav aria-label="Primary" class="cockpit-nav">
+    <form class="nav-search" action="search/" method="get" role="search">
+      <label for="nav-search-input">Search Cockpit</label>
+      <div class="nav-search-field"><span aria-hidden="true">⌕</span><input id="nav-search-input" name="q" type="search" autocomplete="off" inputmode="search" placeholder="Search cockpit..."></div>
+    </form>
+    <a class="home" href="./">Cockpit</a>
+    <a href="inbox/">Inbox</a>
+    <a href="search/">Search</a>
+    <a href="design-system.html" aria-current="page">Design System</a>
+  </nav>
+  <main class="page">
+    <div class="breadcrumbs"><a href="./">Cockpit</a><span class="sep">›</span><span class="here">Design System</span></div>
+    <header class="masthead">
+      <h1>Design System</h1>
+      <p>User-owned visual register for Cockpit Kit starter pages.</p>
+    </header>
+    <p class="lede">The starter now follows Jeremy's current Cockpit baseline: console mono body, light gray canvas, thin rule borders, a restrained green accent, and a sticky left navigation rail with search in the top-left corner.</p>
+    <h2 class="section">Color</h2>
+    <div class="panel">
+      <div class="swatches">
+        <div class="swatch bordered"><div class="chip" style="background:#ecedef"></div><div class="name">--bg</div><div class="hex">#ecedef</div></div>
+        <div class="swatch bordered"><div class="chip" style="background:#ffffff"></div><div class="name">--surface</div><div class="hex">#ffffff</div></div>
+        <div class="swatch bordered"><div class="chip" style="background:#f5f6f8"></div><div class="name">--surface-2</div><div class="hex">#f5f6f8</div></div>
+        <div class="swatch"><div class="chip" style="background:#0f1216"></div><div class="name">--ink</div><div class="hex">#0f1216</div></div>
+        <div class="swatch"><div class="chip" style="background:#4a5159"></div><div class="name">--ink-soft</div><div class="hex">#4a5159</div></div>
+        <div class="swatch"><div class="chip" style="background:#047857"></div><div class="name">--accent</div><div class="hex">#047857</div></div>
+      </div>
+    </div>
+    <h2 class="section">Type</h2>
+    <div class="panel">
+      <dl class="type-spec">
+        <dt>H1 / page title</dt><dd class="h1-sample">A page title</dd>
+        <dt>H2 / card title</dt><dd class="h2-sample">A card title</dd>
+        <dt>Section label</dt><dd class="h3-sample">// SECTION LABEL</dd>
+        <dt>Body</dt><dd>Console mono, 16px, 1.55 line-height. Technical, compact, and legible.</dd>
+      </dl>
+    </div>
+    <h2 class="section">Card</h2>
+    <a class="card" href="#">
+      <h3>Card title goes here</h3>
+      <p class="author">Optional secondary line</p>
+      <p>Cards are flat, bordered, short, and scannable. Hover state uses the green accent instead of a heavy shadow.</p>
+      <div class="tags"><span>tag</span><span>another-tag</span></div>
+    </a>
+    <h2 class="section">Navigation search</h2>
+    <p class="source-line">Every starter page renders the search form as the first item in <code>nav.cockpit-nav</code>, matching the top-left search placement in the current private Cockpit.</p>
+    <footer class="fineprint">This copied page and stylesheet belong to the knowledge repo. Change them freely.</footer>
+  </main>
+  <script type="application/json" id="cockpit-data">
+  {
+    "kind": "cockpit-design-system",
+    "schema_version": 1,
+    "summary": "Starter design system page for user-owned styling.",
+    "register": "techy / light industrial console: mono body, light gray canvas, thin rule borders, restrained green accent",
+    "tokens": {
+      "type": {
+        "body_family": "ui-monospace, SFMono-Regular, Cascadia Code, Cascadia Mono, Roboto Mono, IBM Plex Mono, JetBrains Mono, Liberation Mono, Menlo, Consolas, monospace",
+        "body_size_px": 16,
+        "line_height": 1.55
+      },
+      "color": {
+        "bg": "#ecedef",
+        "surface": "#ffffff",
+        "surface_2": "#f5f6f8",
+        "ink": "#0f1216",
+        "ink_soft": "#4a5159",
+        "ink_faint": "#5f6670",
+        "accent": "#047857",
+        "accent_blue": "#2563eb",
+        "rule": "#d6d8dc",
+        "rule_strong": "#b4b8bd"
+      },
+      "layout": {
+        "left_nav_px": 220,
+        "page_max_width_px": 880,
+        "card_radius_px": 4,
+        "mobile_breakpoint_px": 480
+      }
+    }
+  }
+  </script>
 </body>
 </html>

@@ -9,26 +9,42 @@
   <link rel="stylesheet" href="./cockpit.css">
 </head>
 <body>
-  <div class="shell">
-    <nav aria-label="Primary">
-      <a href="./" aria-current="page">Cockpit</a>
-      <a href="inbox/">Inbox</a>
-      <a href="search/">Search</a>
-      <a href="design-system.html">Design System</a>
-    </nav>
-    <main>
-      <section class="hero">
-        <p class="muted">Local-first knowledge base</p>
-        <h1>Cockpit</h1>
-        <p>This starter root is ready for private notes, rendered pages, and shared agent context.</p>
-      </section>
-      <section class="grid" aria-label="Starter links">
-        <article class="card"><h2>Inbox</h2><p>Collect raw ideas and triage them into durable pages.</p></article>
-        <article class="card"><h2>Search</h2><p>Use the generated static index to find local pages in the browser.</p></article>
-        <article class="card"><h2>Design System</h2><p>Adjust the copied visual system without changing Cockpit Kit itself.</p></article>
-      </section>
-    </main>
-  </div>
+  <nav aria-label="Primary" class="cockpit-nav">
+    <form class="nav-search" action="search/" method="get" role="search">
+      <label for="nav-search-input">Search Cockpit</label>
+      <div class="nav-search-field"><span aria-hidden="true">⌕</span><input id="nav-search-input" name="q" type="search" autocomplete="off" inputmode="search" placeholder="Search cockpit..."></div>
+    </form>
+    <a class="home" href="./" aria-current="page">Cockpit</a>
+    <a href="inbox/">Inbox</a>
+    <a href="search/">Search</a>
+    <a href="design-system.html">Design System</a>
+  </nav>
+  <main class="page">
+    <header class="masthead">
+      <h1>Cockpit</h1>
+      <p>Local-first knowledge base for private notes, rendered pages, and shared agent context.</p>
+    </header>
+    <p class="lede">This starter root now uses the same light industrial console register as the current Cockpit: mono type, light gray canvas, thin rules, compact cards, and a persistent search field in the upper-left navigation rail.</p>
+    <h2 class="section">Start here</h2>
+    <div class="grid-list" aria-label="Starter links">
+      <a class="card" href="inbox/">
+        <h3>Inbox</h3>
+        <p>Capture raw ideas first, then triage them into durable pages when they earn the dignity.</p>
+        <div class="tags"><span>capture</span><span>triage</span></div>
+      </a>
+      <a class="card" href="search/">
+        <h3>Search</h3>
+        <p>Use the generated static index to find local pages directly in the browser.</p>
+        <div class="tags"><span>static-index</span><span>local-first</span></div>
+      </a>
+      <a class="card" href="design-system.html">
+        <h3>Design System</h3>
+        <p>Adjust the copied visual system inside the knowledge repo without changing Cockpit Kit itself.</p>
+        <div class="tags"><span>tokens</span><span>visual-register</span></div>
+      </a>
+    </div>
+    <footer class="fineprint">Starter page for Cockpit Kit. The <code>cockpit-data</code> block is durable; the rendered body is safe to regenerate.</footer>
+  </main>
   <script type="application/json" id="cockpit-data">{"kind":"cockpit-home","schema_version":1,"summary":"Starter Cockpit home page."}</script>
 </body>
 </html>

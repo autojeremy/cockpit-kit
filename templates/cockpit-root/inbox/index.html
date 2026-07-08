@@ -9,29 +9,33 @@
   <link rel="stylesheet" href="../cockpit.css">
 </head>
 <body>
-  <div class="shell">
-    <nav aria-label="Primary">
-      <a href="../">Cockpit</a>
-      <a href="./" aria-current="page">Inbox</a>
-      <a href="../search/">Search</a>
-      <a href="../design-system.html">Design System</a>
-    </nav>
-    <main>
-      <section class="hero">
-        <p class="muted">Capture first, organize later</p>
-        <h1>Inbox</h1>
-        <p>Use this page as a landing zone for notes that still need review, source decisions, or structure.</p>
-      </section>
-      <section class="card">
-        <h2>Starter prompts</h2>
-        <ul>
-          <li>What should be saved here?</li>
-          <li>Does it belong in a durable page?</li>
-          <li>Which source owns the truth?</li>
-        </ul>
-      </section>
-    </main>
-  </div>
+  <nav aria-label="Primary" class="cockpit-nav">
+    <form class="nav-search" action="../search/" method="get" role="search">
+      <label for="nav-search-input">Search Cockpit</label>
+      <div class="nav-search-field"><span aria-hidden="true">⌕</span><input id="nav-search-input" name="q" type="search" autocomplete="off" inputmode="search" placeholder="Search cockpit..."></div>
+    </form>
+    <a class="home" href="../">Cockpit</a>
+    <a href="../inbox/" aria-current="page">Inbox</a>
+    <a href="../search/">Search</a>
+    <a href="../design-system.html">Design System</a>
+  </nav>
+  <main class="page">
+    <div class="breadcrumbs"><a href="../">Cockpit</a><span class="sep">›</span><span class="here">Inbox</span></div>
+    <header class="masthead">
+      <h1>Inbox</h1>
+      <p>Capture first, organize later.</p>
+    </header>
+    <p class="lede">Use this page as a landing zone for notes that still need review, source decisions, or structure.</p>
+    <h2 class="section">Starter prompts</h2>
+    <section class="panel">
+      <ul>
+        <li>What should be saved here?</li>
+        <li>Does it belong in a durable page?</li>
+        <li>Which source owns the truth?</li>
+      </ul>
+    </section>
+    <footer class="fineprint">Inbox entries are working material. Promote the useful ones; let the rest decay naturally.</footer>
+  </main>
   <script type="application/json" id="cockpit-data">{"kind":"cockpit-inbox","schema_version":1,"summary":"Starter inbox for unprocessed notes."}</script>
 </body>
 </html>
