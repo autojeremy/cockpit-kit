@@ -9,26 +9,30 @@
   <link rel="stylesheet" href="../cockpit.css">
 </head>
 <body>
-  <div class="shell">
-    <nav aria-label="Primary">
-      <a href="../">Cockpit</a>
-      <a href="../inbox/">Inbox</a>
-      <a href="./" aria-current="page">Search</a>
-      <a href="../design-system.html">Design System</a>
-    </nav>
-    <main>
-      <section class="hero">
-        <p class="muted">Static local search</p>
-        <h1>Search</h1>
-        <form class="search-box" id="search-form">
-          <input id="q" name="q" type="search" autocomplete="off" placeholder="Search local pages" aria-label="Search local pages">
-          <button type="submit">Search</button>
-        </form>
-      </section>
-      <section class="card" id="status">Loading search index...</section>
-      <section class="grid" id="results" aria-live="polite"></section>
-    </main>
-  </div>
+  <nav aria-label="Primary" class="cockpit-nav">
+    <form class="nav-search" action="./" method="get" role="search">
+      <label for="nav-search-input">Search Cockpit</label>
+      <div class="nav-search-field"><span aria-hidden="true">⌕</span><input id="nav-search-input" name="q" type="search" autocomplete="off" inputmode="search" placeholder="Search cockpit..."></div>
+    </form>
+    <a class="home" href="../">Cockpit</a>
+    <a href="../inbox/">Inbox</a>
+    <a href="./" aria-current="page">Search</a>
+    <a href="../design-system.html">Design System</a>
+  </nav>
+  <main class="page">
+    <div class="breadcrumbs"><a href="../">Cockpit</a><span class="sep">›</span><span class="here">Search</span></div>
+    <header class="masthead">
+      <h1>Search</h1>
+      <p>Static local search over the generated Cockpit index.</p>
+    </header>
+    <form class="panel" id="search-form" role="search">
+      <label for="q" class="meta-sample">Search local pages</label>
+      <div class="nav-search-field" style="margin-top: 8px;"><input id="q" name="q" type="search" autocomplete="off" inputmode="search" placeholder="Search local pages" style="width:100%; min-height:40px; border:1px solid var(--rule); border-radius:var(--radius); padding:8px 10px; font:inherit;"></div>
+    </form>
+    <section class="source-line" id="status">Loading search index...</section>
+    <h2 class="section">Results</h2>
+    <section class="grid-list" id="results" aria-live="polite"></section>
+  </main>
   <script type="application/json" id="cockpit-data">{"kind":"cockpit-search","schema_version":1,"summary":"Starter browser search page."}</script>
   <script>
     const form = document.querySelector('#search-form');
