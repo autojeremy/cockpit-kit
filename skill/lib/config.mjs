@@ -130,7 +130,7 @@ export function resolveRoot({ argv = [], env, forWrite = false, stderr } = {}) {
 
   if (!rawRoot) {
     throw new RootResolutionError(
-      `No Cockpit root configured. Run: node <cockpit-kit>/scripts/link.mjs <path> or node <cockpit-kit>/scripts/setup.mjs --cockpit-root <path>. Looked for config at ${pathToConfig}.`,
+      `No Cockpit root configured. Run: node <cockpit-kit>/skill/scripts/link.mjs <path> or node <cockpit-kit>/skill/scripts/setup.mjs --cockpit-root <path>. Looked for config at ${pathToConfig}.`,
       { configPath: pathToConfig },
     );
   }

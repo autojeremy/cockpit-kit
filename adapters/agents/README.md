@@ -3,7 +3,7 @@
 Target path:
 
 ```text
-~/.agents/skills/cockpit -> /absolute/path/to/cockpit-kit
+~/.agents/skills/cockpit -> /absolute/path/to/cockpit-kit/skill
 ```
 
 Discovery order is host-specific, but generic agents should load skills from:
@@ -15,14 +15,14 @@ Discovery order is host-specific, but generic agents should load skills from:
 Install with setup:
 
 ```bash
-node scripts/setup.mjs --cockpit-root /path/to/cockpit --adapters agents
+node skill/scripts/setup.mjs --cockpit-root /path/to/cockpit --adapters agents
 ```
 
 Manual install:
 
 ```bash
 mkdir -p ~/.agents/skills
-ln -s /absolute/path/to/cockpit-kit ~/.agents/skills/cockpit
+ln -s /absolute/path/to/cockpit-kit/skill ~/.agents/skills/cockpit
 ```
 
 Uninstall:

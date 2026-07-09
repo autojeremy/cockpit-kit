@@ -4,10 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { readConfig } from '../lib/config.mjs';
+import { readConfig } from '../skill/lib/config.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
-const setupScript = path.join(repoRoot, 'scripts', 'setup.mjs');
+const skillRoot = path.join(repoRoot, 'skill');
+const setupScript = path.join(skillRoot, 'scripts', 'setup.mjs');
 
 function tempDir(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -35,7 +36,7 @@ function runSetup(args, env) {
 function assertSymlink(targetPath) {
   const stat = fs.lstatSync(targetPath);
   assert.equal(stat.isSymbolicLink(), true);
-  assert.equal(fs.realpathSync.native(targetPath), fs.realpathSync.native(repoRoot));
+  assert.equal(fs.realpathSync.native(targetPath), fs.realpathSync.native(skillRoot));
 }
 
 test('setup installs agents adapter fresh and idempotently', () => {
@@ -76,13 +77,27 @@ test('setup refuses foreign adapter symlink unless forced', () => {
   assertSymlink(target);
 });
 
+test('setup upgrades a legacy repo-root adapter symlink without --force', () => {
+  const home = tempDir('cockpit-setup-home-');
+  const root = makeRoot();
+  const env = makeEnv(home);
+  const target = path.join(home, '.agents', 'skills', 'cockpit');
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.symlinkSync(repoRoot, target, 'dir');
+
+  const result = runSetup(['--cockpit-root', root, '--adapters', 'agents', '--yes'], env);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /upgraded from legacy repo-root target/);
+  assertSymlink(target);
+});
+
 test('setup treats equivalent realpath adapter symlinks as already installed', () => {
   const home = tempDir('cockpit-setup-home-');
   const root = makeRoot();
   const env = makeEnv(home);
   const target = path.join(home, '.agents', 'skills', 'cockpit');
   const alias = path.join(tempDir('cockpit-kit-alias-parent-'), 'kit-alias');
-  fs.symlinkSync(repoRoot, alias, 'dir');
+  fs.symlinkSync(skillRoot, alias, 'dir');
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.symlinkSync(alias, target, 'dir');
 
@@ -115,7 +130,7 @@ test('setup writes config outside kit and root', () => {
 
   const config = readConfig(env);
   assert.equal(config.cockpitRoot, root);
-  assert.equal(config.skillRoot, repoRoot);
+  assert.equal(config.skillRoot, skillRoot);
   assert.equal(config.configPath, path.join(xdg, 'cockpit', 'config.toml'));
   assert.equal(config.configPath.startsWith(repoRoot), false);
   assert.equal(config.configPath.startsWith(root), false);

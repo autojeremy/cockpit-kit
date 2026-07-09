@@ -3,32 +3,32 @@
 Target path:
 
 ```text
-<hermes-home>/skills/productivity/cockpit -> /absolute/path/to/cockpit-kit
+<hermes-home>/skills/productivity/cockpit -> /absolute/path/to/cockpit-kit/skill
 ```
 
 Hermes home resolution order:
 
-1. `--hermes-home <path>` passed to `scripts/setup.mjs`.
+1. `--hermes-home <path>` passed to `skill/scripts/setup.mjs`.
 2. `$HERMES_HOME`.
 3. `~/.hermes`.
 
 Install with setup:
 
 ```bash
-node scripts/setup.mjs --cockpit-root /path/to/cockpit --adapters hermes
+node skill/scripts/setup.mjs --cockpit-root /path/to/cockpit --adapters hermes
 ```
 
 Override Hermes home:
 
 ```bash
-node scripts/setup.mjs --cockpit-root /path/to/cockpit --adapters hermes --hermes-home /path/to/hermes-home
+node skill/scripts/setup.mjs --cockpit-root /path/to/cockpit --adapters hermes --hermes-home /path/to/hermes-home
 ```
 
 Manual install:
 
 ```bash
 mkdir -p ~/.hermes/skills/productivity
-ln -s /absolute/path/to/cockpit-kit ~/.hermes/skills/productivity/cockpit
+ln -s /absolute/path/to/cockpit-kit/skill ~/.hermes/skills/productivity/cockpit
 ```
 
 Uninstall:

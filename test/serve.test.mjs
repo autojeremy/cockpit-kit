@@ -6,9 +6,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
-import { parseServeConfig } from '../lib/serve-config.mjs';
-import { writeConfig } from '../lib/config.mjs';
-import { createServeServer } from '../scripts/serve.mjs';
+import { parseServeConfig } from '../skill/lib/serve-config.mjs';
+import { writeConfig } from '../skill/lib/config.mjs';
+import { createServeServer } from '../skill/scripts/serve.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 
@@ -169,7 +169,7 @@ test('e2e setup, unrelated repo where, and authenticated serve', async () => {
   copyKit(kit);
   const env = cleanEnv(home);
 
-  const setup = spawnSync(process.execPath, [path.join(kit, 'scripts', 'setup.mjs'), '--yes', '--cockpit-root', root, '--adapters', 'agents', '--no-git'], { cwd: kit, env, encoding: 'utf8' });
+  const setup = spawnSync(process.execPath, [path.join(kit, 'skill', 'scripts', 'setup.mjs'), '--yes', '--cockpit-root', root, '--adapters', 'agents', '--no-git'], { cwd: kit, env, encoding: 'utf8' });
   assert.equal(setup.status, 0, setup.stderr);
 
   const unrelated = tempDir('cockpit-unrelated-repo-');
@@ -177,13 +177,13 @@ test('e2e setup, unrelated repo where, and authenticated serve', async () => {
   const before = spawnSync('git', ['status', '--porcelain'], { cwd: unrelated, encoding: 'utf8' });
   assert.equal(before.stdout, '');
 
-  const where = spawnSync(process.execPath, [path.join(kit, 'scripts', 'where.mjs'), '--json'], { cwd: unrelated, env, encoding: 'utf8' });
+  const where = spawnSync(process.execPath, [path.join(kit, 'skill', 'scripts', 'where.mjs'), '--json'], { cwd: unrelated, env, encoding: 'utf8' });
   assert.equal(where.status, 0, where.stderr);
   assert.equal(JSON.parse(where.stdout).cockpit_root, root);
   const after = spawnSync('git', ['status', '--porcelain'], { cwd: unrelated, encoding: 'utf8' });
   assert.equal(after.stdout, '');
 
-  const child = spawnServe(path.join(kit, 'scripts', 'serve.mjs'), ['--root', root, '--port', '0'], env);
+  const child = spawnServe(path.join(kit, 'skill', 'scripts', 'serve.mjs'), ['--root', root, '--port', '0'], env);
   try {
     const served = await waitForServing(child);
     const token = new URL(served).searchParams.get('token');

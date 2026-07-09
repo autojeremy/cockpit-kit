@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { gitAvailable, identityConfigured, initAndCommit } from '../lib/git.mjs';
+import { gitAvailable, identityConfigured, initAndCommit } from '../skill/lib/git.mjs';
 
 function tempDir(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));

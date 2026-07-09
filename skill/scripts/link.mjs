@@ -7,7 +7,7 @@ import { validateCockpitRoot, writeConfig } from '../lib/config.mjs';
 import { initAndCommit } from '../lib/git.mjs';
 
 function usage() {
-  return 'Usage: node scripts/link.mjs [--create] [--no-git] [--] <cockpit-root>\n';
+  return 'Usage: node skill/scripts/link.mjs [--create] [--no-git] [--] <cockpit-root>\n';
 }
 
 function runChecked(script, args, env) {

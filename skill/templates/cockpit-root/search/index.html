@@ -58,7 +58,7 @@
       const queryTerms = terms(input.value);
       results.replaceChildren();
       if (!index || !Array.isArray(index.pages) || index.pages.length === 0) {
-        statusBox.textContent = 'No search index entries yet. Run `node scripts/search-index.mjs` from Cockpit Kit after pages exist.';
+        statusBox.textContent = 'No search index entries yet. Run `node skill/scripts/search-index.mjs` from Cockpit Kit after pages exist.';
         return;
       }
       if (queryTerms.length === 0) {
