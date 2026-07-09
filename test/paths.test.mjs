@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { expandHome, configPath, kitRoot, isPathInside, assertNode20 } from '../lib/paths.mjs';
+import { expandHome, configPath, kitRoot, isPathInside, assertNode20 } from '../skill/lib/paths.mjs';
 
 test('expandHome and configPath honor explicit env', () => {
   assert.equal(expandHome('~/cockpit', { HOME: '/home/test' }), '/home/test/cockpit');

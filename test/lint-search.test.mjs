@@ -6,8 +6,9 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
-const lintScript = path.join(repoRoot, 'scripts', 'lint.mjs');
-const indexScript = path.join(repoRoot, 'scripts', 'search-index.mjs');
+const skillRoot = path.join(repoRoot, 'skill');
+const lintScript = path.join(skillRoot, 'scripts', 'lint.mjs');
+const indexScript = path.join(skillRoot, 'scripts', 'search-index.mjs');
 
 function tempDir(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -82,7 +83,7 @@ test('shared stylesheet fixed-width findings are reported once', () => {
 
 test('starter template passes strict lint after generated index', () => {
   const root = tempDir('cockpit-starter-root-');
-  fs.cpSync(path.join(repoRoot, 'templates', 'cockpit-root'), root, { recursive: true });
+  fs.cpSync(path.join(skillRoot, 'templates', 'cockpit-root'), root, { recursive: true });
   const generated = run(indexScript, ['--root', root]);
   assert.equal(generated.status, 0, generated.stderr);
   const linted = run(lintScript, ['--root', root, '--strict', '--json']);

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseToml, stringifyToml, TomlParseError } from '../lib/toml.mjs';
+import { parseToml, stringifyToml, TomlParseError } from '../skill/lib/toml.mjs';
 
 test('parses the Phase 0 TOML subset', () => {
   const data = parseToml(`# comment\n[[nav]]\nlabel = "Inbox"\nhref = "inbox/"\n\n[sources.example-notes]\nkind = "file"\npath = "~/notes/example"\n\n[serve]\nhost = "127.0.0.1"\nport = 18765\nauth = true\nnames = ["a", "b\\nt"]\n`);

@@ -4,11 +4,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { readConfig, writeConfig } from '../lib/config.mjs';
+import { readConfig, writeConfig } from '../skill/lib/config.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
-const whereScript = path.join(repoRoot, 'scripts', 'where.mjs');
-const linkScript = path.join(repoRoot, 'scripts', 'link.mjs');
+const skillRoot = path.join(repoRoot, 'skill');
+const whereScript = path.join(skillRoot, 'scripts', 'where.mjs');
+const linkScript = path.join(skillRoot, 'scripts', 'link.mjs');
 
 function makeHome() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'cockpit-cli-home-'));
@@ -46,7 +47,7 @@ test('where.mjs emits JSON shape and warns on stale config skill_root', () => {
   assert.equal(result.status, 0, result.stderr);
   const payload = JSON.parse(result.stdout);
   assert.equal(payload.cockpit_root, root);
-  assert.equal(payload.skill_root, repoRoot);
+  assert.equal(payload.skill_root, skillRoot);
   assert.equal(payload.source, 'config');
   assert.match(result.stderr, /config skill_root .* differs from inferred kit root/);
 });
@@ -56,7 +57,7 @@ test('where.mjs reports remediation and nonzero exit when unresolved', () => {
   const result = run(whereScript, ['--json'], env);
   assert.equal(result.status, 1);
   assert.equal(result.stdout, '');
-  assert.match(result.stderr, /scripts\/link\.mjs <path>/);
+  assert.match(result.stderr, /skill\/scripts\/link\.mjs <path>/);
 });
 
 test('where.mjs exposes arg, env, and config precedence through the CLI', () => {
@@ -96,7 +97,7 @@ test('link.mjs covers help, create, valid config write, and invalid root refusal
 
   const help = run(linkScript, ['--help'], env);
   assert.equal(help.status, 0);
-  assert.match(help.stdout, /Usage: node scripts\/link\.mjs/);
+  assert.match(help.stdout, /Usage: node skill\/scripts\/link\.mjs/);
 
   const createdRoot = path.join(home, 'new-root');
   const create = run(linkScript, ['--create', '--no-git', createdRoot], env);
@@ -129,5 +130,5 @@ test('link.mjs covers help, create, valid config write, and invalid root refusal
   assert.match(linked.stdout, /Linked Cockpit root/);
   const config = readConfig(env);
   assert.equal(config.cockpitRoot, root);
-  assert.equal(config.skillRoot, repoRoot);
+  assert.equal(config.skillRoot, skillRoot);
 });

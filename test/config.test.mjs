@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { readConfig, writeConfig, resolveRoot, parseRootArg, validateCockpitRoot, ArgumentError, RootResolutionError, CockpitRootValidationError } from '../lib/config.mjs';
+import { readConfig, writeConfig, resolveRoot, parseRootArg, validateCockpitRoot, ArgumentError, RootResolutionError, CockpitRootValidationError } from '../skill/lib/config.mjs';
 
 function makeEnv() {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'cockpit-config-home-'));

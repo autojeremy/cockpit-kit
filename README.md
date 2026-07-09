@@ -32,7 +32,7 @@ git clone https://github.com/autojeremy/cockpit-kit ~/.local/share/cockpit-kit
 Create a new starter knowledge repo and install adapters:
 
 ```bash
-node ~/.local/share/cockpit-kit/scripts/setup.mjs \
+node ~/.local/share/cockpit-kit/skill/scripts/setup.mjs \
   --cockpit-root ~/cockpit \
   --adapters agents,hermes,claude \
   --yes
@@ -41,7 +41,7 @@ node ~/.local/share/cockpit-kit/scripts/setup.mjs \
 Or link an existing Cockpit-compatible knowledge repo:
 
 ```bash
-node ~/.local/share/cockpit-kit/scripts/setup.mjs \
+node ~/.local/share/cockpit-kit/skill/scripts/setup.mjs \
   --cockpit-root /path/to/knowledge-repo \
   --adapters agents,hermes,claude \
   --yes
@@ -54,36 +54,36 @@ Setup writes machine-local config to `${XDG_CONFIG_HOME:-~/.config}/cockpit/conf
 Resolve the configured knowledge repo:
 
 ```bash
-node ~/.local/share/cockpit-kit/scripts/where.mjs --json
+node ~/.local/share/cockpit-kit/skill/scripts/where.mjs --json
 ```
 
 Generate search index data:
 
 ```bash
-node ~/.local/share/cockpit-kit/scripts/search-index.mjs --root /path/to/knowledge-repo
+node ~/.local/share/cockpit-kit/skill/scripts/search-index.mjs --root /path/to/knowledge-repo
 ```
 
 Lint a knowledge repo strictly:
 
 ```bash
-node ~/.local/share/cockpit-kit/scripts/lint.mjs --root /path/to/knowledge-repo --strict
+node ~/.local/share/cockpit-kit/skill/scripts/lint.mjs --root /path/to/knowledge-repo --strict
 ```
 
 Serve a knowledge repo locally:
 
 ```bash
-node ~/.local/share/cockpit-kit/scripts/serve.mjs --root /path/to/knowledge-repo
+node ~/.local/share/cockpit-kit/skill/scripts/serve.mjs --root /path/to/knowledge-repo
 ```
 
 `serve.mjs` binds to loopback by default and prints a tokenized URL. Use `--no-auth` only on a trusted machine.
 
 ## AI adapters
 
-Setup can install symlinked adapters for:
+Setup can install symlinked adapters. Each adapter symlink points at the kit's `skill/` directory (the isolated AI-skill payload), not the repo root:
 
-- Generic agents: `~/.agents/skills/cockpit`
-- Hermes: `${HERMES_HOME:-~/.hermes}/skills/productivity/cockpit`
-- Claude Code: `~/.claude/skills/cockpit`
+- Generic agents: `~/.agents/skills/cockpit -> /absolute/path/to/cockpit-kit/skill`
+- Hermes: `${HERMES_HOME:-~/.hermes}/skills/productivity/cockpit -> /absolute/path/to/cockpit-kit/skill`
+- Claude Code: `~/.claude/skills/cockpit -> /absolute/path/to/cockpit-kit/skill`
 
 Symlinked adapters are live agent policy. Review diffs before pulling updates into an installed kit clone, and prefer tagged releases for stable installs.
 
@@ -105,7 +105,7 @@ The GitHub Actions workflow runs `node --test` on Ubuntu and macOS with Node 20 
 
 ## Documentation
 
-- Page contract: [`reference/page-contract.md`](reference/page-contract.md)
+- Page contract: [`skill/reference/page-contract.md`](skill/reference/page-contract.md)
 
 ## Security
 

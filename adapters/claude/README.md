@@ -3,20 +3,20 @@
 Target path:
 
 ```text
-~/.claude/skills/cockpit -> /absolute/path/to/cockpit-kit
+~/.claude/skills/cockpit -> /absolute/path/to/cockpit-kit/skill
 ```
 
 Install with setup:
 
 ```bash
-node scripts/setup.mjs --cockpit-root /path/to/cockpit --adapters claude
+node skill/scripts/setup.mjs --cockpit-root /path/to/cockpit --adapters claude
 ```
 
 Manual install:
 
 ```bash
 mkdir -p ~/.claude/skills
-ln -s /absolute/path/to/cockpit-kit ~/.claude/skills/cockpit
+ln -s /absolute/path/to/cockpit-kit/skill ~/.claude/skills/cockpit
 ```
 
 Uninstall:

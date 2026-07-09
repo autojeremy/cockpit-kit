@@ -11,7 +11,7 @@ import { initAndCommit } from '../lib/git.mjs';
 const adapters = new Set(['agents', 'hermes', 'claude']);
 
 function usage() {
-  return `Usage: node scripts/setup.mjs [options]
+  return `Usage: node skill/scripts/setup.mjs [options]
 
 Options:
   --cockpit-root <path>       Existing Cockpit root to link
@@ -109,9 +109,22 @@ function sameSymlinkTarget(existing, target) {
   }
 }
 
+// Legacy installs symlinked the adapter at the repo root, which is now the parent
+// of the skill root. Recognize that specific case so an upgrade repoints in place
+// without requiring --force, while genuinely foreign targets still need --force.
+function isLegacyRepoRootTarget(existing, targetRoot) {
+  const link = symlinkTarget(existing);
+  if (!link) return false;
+  try {
+    return fs.realpathSync.native(path.resolve(path.dirname(existing), link)) === fs.realpathSync.native(path.dirname(targetRoot));
+  } catch {
+    return false;
+  }
+}
+
 function preflightAdapter(adapter, targetPath, targetRoot, options) {
   const existingStat = fs.lstatSync(targetPath, { throwIfNoEntry: false });
-  if (!existingStat || sameSymlinkTarget(targetPath, targetRoot)) return;
+  if (!existingStat || sameSymlinkTarget(targetPath, targetRoot) || isLegacyRepoRootTarget(targetPath, targetRoot)) return;
   const prior = symlinkTarget(targetPath) ?? 'non-symlink path';
   if (!options.force) throw new Error(`${adapter} adapter conflict at ${targetPath}; existing target: ${prior}. Rerun with --force to replace it.`);
 }
@@ -124,8 +137,12 @@ function installAdapter(adapter, targetPath, targetRoot, options, plan) {
       return;
     }
     const prior = symlinkTarget(targetPath) ?? 'non-symlink path';
-    if (!options.force) throw new Error(`${adapter} adapter conflict at ${targetPath}; existing target: ${prior}. Rerun with --force to replace it.`);
-    plan.push({ action: 'replace', path: targetPath, detail: `${adapter} adapter foreign path replaced; previous target: ${prior}` });
+    const legacy = isLegacyRepoRootTarget(targetPath, targetRoot);
+    if (!legacy && !options.force) throw new Error(`${adapter} adapter conflict at ${targetPath}; existing target: ${prior}. Rerun with --force to replace it.`);
+    const detail = legacy
+      ? `${adapter} adapter upgraded from legacy repo-root target; previous target: ${prior}`
+      : `${adapter} adapter foreign path replaced; previous target: ${prior}`;
+    plan.push({ action: 'replace', path: targetPath, detail });
     if (!options.dryRun) fs.rmSync(targetPath, { recursive: true, force: true });
   } else {
     plan.push({ action: 'create', path: targetPath, detail: `${adapter} adapter symlink -> ${targetRoot}` });
@@ -257,7 +274,7 @@ async function main() {
   else plan.push({ action: 'skip', path: path.join(targetRoot, 'scripts', 'where.mjs'), detail: 'dry-run skipped where.mjs verification' });
 
   printPlan(plan);
-  process.stdout.write(options.dryRun ? 'Dry run complete; no filesystem changes made.\n' : 'Setup complete. Verify with: node <cockpit-kit>/scripts/where.mjs --json\n');
+  process.stdout.write(options.dryRun ? 'Dry run complete; no filesystem changes made.\n' : 'Setup complete. Verify with: node <cockpit-kit>/skill/scripts/where.mjs --json\n');
 }
 
 main().catch((error) => {
