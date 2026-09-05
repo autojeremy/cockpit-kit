@@ -106,6 +106,7 @@ The GitHub Actions workflow runs `node --test` on Ubuntu and macOS with Node 20 
 ## Documentation
 
 - Page contract: [`skill/reference/page-contract.md`](skill/reference/page-contract.md)
+- Proposed design, not implemented: [Operator comments and capture lifecycle](.hermes/plans/operator-comments-and-capture.md) ([#10](https://github.com/autojeremy/cockpit-kit/issues/10)).
 
 ## Security
 
