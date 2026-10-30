@@ -166,6 +166,7 @@ node <skill-dir>/scripts/intents.mjs list --root "$COCKPIT_ROOT"
 5. Otherwise make the change with the normal Render/Re-render workflow, regenerate search, lint, and commit. Do not copy request IDs, operator text, or payload into pages, commit messages, or `.cockpit/`; deliberately adopted content is fine.
 6. Record the outcome: `intents.mjs resolve <id> --claim <token> --outcome changed --summary "..." --page /route/ --commit <sha>`. Use `already_satisfied`, `answered`, or `declined` (with a summary, no commit) when nothing changed. `changed` requires a commit that exists in the knowledge repo.
 7. If you must stop without finishing, `intents.mjs release <id> --claim <token>` so the request returns to Pending. While you hold a claim the operator cannot add follow-ups or cancel, so never leave a claim behind.
+8. If a claim is stuck because its token was lost, `intents.mjs release <id> --force --reason "..." --consumer <your-name>` clears the claim without the token, returns the request to Pending, and records who, when, and why in `processing.history`. Like the lock's `--force`, this is for the operator, or when the operator tells you the holder lost its token or is gone; never use it to take over another agent's live work.
 
 The CLI cannot create requests or operator replies; only the authenticated browser service can.
 
