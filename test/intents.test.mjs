@@ -533,7 +533,7 @@ test('intents.mjs CLI lists, claims, resolves, and shows history', () => {
 // ---------- multiple exact origins ----------
 
 const ORIGIN_A = 'https://cockpit.example.com';
-const ORIGIN_B = 'https://cockpit.tailnet.example.ts.net';
+const ORIGIN_B = 'https://cockpit.example.net';
 
 test('origin parsing normalizes exact origins and rejects wildcards, paths, lists, and malformed values', async () => {
   const { normalizeOrigin, normalizeOrigins } = await import('../skill/lib/intents/origins.mjs');
@@ -575,9 +575,9 @@ test('service accepts either configured origin with the same CSRF token and deni
     assert.equal(reply.status, 200, reply.text);
     for (const nearMiss of [
       `${ORIGIN_A}/`, `${ORIGIN_B}/`,
-      'http://cockpit.example.com', 'http://cockpit.tailnet.example.ts.net',
-      'https://evil.cockpit.example.com', 'https://sub.cockpit.tailnet.example.ts.net',
-      'https://cockpit.example.com.evil.test', 'https://example.com', 'https://tailnet.example.ts.net',
+      'http://cockpit.example.com', 'http://cockpit.example.net',
+      'https://evil.cockpit.example.com', 'https://sub.cockpit.example.net',
+      'https://cockpit.example.com.evil.test', 'https://example.com', 'https://example.net',
       'https://cockpit.example.com:443', 'https://cockpit.example.com:8443', 'HTTPS://COCKPIT.EXAMPLE.COM',
       `${ORIGIN_A}, ${ORIGIN_B}`, '*', 'null',
     ]) {

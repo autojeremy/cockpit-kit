@@ -1,6 +1,6 @@
 # Operator comments and capture lifecycle
 
-Status: proposed for operator review. A lean first version is implemented on branch `feat/operator-comments-mvp` (operator chose "lean first version, harden later"); see [MVP implementation status](#mvp-implementation-status). The rest of this document remains the target design.
+Status: proposed for operator review. A lean first version is implemented in this repo (operator chose "lean first version, harden later"); see [MVP implementation status](#mvp-implementation-status). The rest of this document remains the target design.
 
 Tracks [issue #10](https://github.com/autojeremy/cockpit-kit/issues/10) within [epic #9](https://github.com/autojeremy/cockpit-kit/issues/9). Baseline: [discussion #3](https://github.com/autojeremy/cockpit-kit/discussions/3), including both follow-ups. Shared identity baseline: [discussion #4](https://github.com/autojeremy/cockpit-kit/discussions/4), including both follow-ups, and [design issue #12](https://github.com/autojeremy/cockpit-kit/issues/12).
 
