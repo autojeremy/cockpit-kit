@@ -232,7 +232,6 @@ nav.cockpit-nav .nav-search input:focus {
  * Pages that show it reserve a top band (--cockpit-top-reserve) where it
  * would otherwise cover content: next to the search field on narrow
  * screens, above the page column on mid widths, and above the page TOC.
- * cockpit-intents.css reads the same variable to keep its panel below it.
  * Other fixed UI near the top of the viewport can read the same variable
  * to stay clear of it.
  *

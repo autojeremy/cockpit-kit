@@ -85,10 +85,17 @@ test('theme switcher is a compact control fixed to the top-right corner', () => 
   assert.match(base, /top:\s*calc\([^;]*env\(safe-area-inset-top/);
   assert.match(base, /right:\s*calc\([^;]*env\(safe-area-inset-right/);
   const z = Number(base.match(/z-index:\s*(\d+)/)?.[1]);
-  const intentsCss = fs.readFileSync(path.join(templateRoot, 'cockpit-intents.css'), 'utf8');
-  const widgetZ = Math.min(...[...intentsCss.matchAll(/z-index:\s*(\d+)/g)].map((m) => Number(m[1])));
-  assert.ok(z > 0 && z < widgetZ, 'switcher stays below the comments widget so its open panel is never covered');
-  assert.match(intentsCss, /max-height:\s*calc\(100dvh - 72px - var\(--cockpit-top-reserve/, 'comments panel keeps clear of the reserved top band');
+  assert.ok(z > 0, 'switcher needs a positive z-index');
+  // The optional comments widget (cockpit-intents.css) is not part of every
+  // starter; when present, its panel must sit above the switcher (z-index) and
+  // below the top band the switcher reserves.
+  const intentsPath = path.join(templateRoot, 'cockpit-intents.css');
+  if (fs.existsSync(intentsPath)) {
+    const intentsCss = fs.readFileSync(intentsPath, 'utf8');
+    const widgetZ = Math.min(...[...intentsCss.matchAll(/z-index:\s*(\d+)/g)].map((m) => Number(m[1])));
+    assert.ok(z < widgetZ, 'switcher stays below the comments widget so its open panel is never covered');
+    assert.match(intentsCss, /max-height:\s*calc\(100dvh - 72px - var\(--cockpit-top-reserve/, 'comments panel keeps clear of the reserved top band');
+  }
 
   const size = Number(css.match(/:root\s*\{\s*--theme-switch-size:\s*(\d+)px/)?.[1]);
   assert.ok(size >= 32, `tap target is ${size}px`);
