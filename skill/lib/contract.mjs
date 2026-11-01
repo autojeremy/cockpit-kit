@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { isPathInside } from './paths.mjs';
 import { decodeEntities as decodeHtmlEntities, expectedCurrentIndex, isHomeHref, parseNav } from './nav.mjs';
+import { hardcodedColorFindings } from './css-colors.mjs';
 
 export const SEARCH_INDEX_SENTINEL = '1970-01-01T00:00:00Z';
 export const INDEX_TEXT_LIMIT = 12000;
@@ -216,6 +217,7 @@ export function checkPage({ pagePath, html, navItems, navManifestPresent = false
 
   const styleText = scanned.tags.filter((tag) => tag.name === 'style').map((tag) => tag.content).join('\n');
   errors.push(...cssFixedWidthFindings(styleText, pagePath));
+  warnings.push(...hardcodedColorFindings(styleText));
   return { errors, warnings, scanned };
 }
 
