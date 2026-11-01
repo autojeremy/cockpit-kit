@@ -32,7 +32,7 @@
     </fieldset>
   </nav>
   <main class="page">
-    <div class="breadcrumbs"><a href="./">Cockpit</a><span class="sep">›</span><span class="here">Design System</span></div>
+    <div class="breadcrumbs"><a href="./">Cockpit</a><span class="sep">/</span><span class="here">Design System</span></div>
     <header class="masthead">
       <h1>Design System</h1>
       <p>User-owned visual register for Cockpit Kit starter pages.</p>
@@ -60,6 +60,15 @@
     <div class="panel">
       <div class="badges-row"><span class="badge reading">Reading</span><span class="badge finished">Finished</span><span class="badge paused">Paused</span><span class="badge to-read">To read</span><span class="badge active">Active</span><span class="badge draft">Draft</span><span class="badge shipped">Shipped</span></div>
     </div>
+    <h2 class="section">Status colors &amp; data components</h2>
+    <div class="panel">
+      <p class="source-line">State uses <code>--ok</code>, <code>--warn</code>, <code>--bad</code> and <code>--info</code>, each with <code>-bg</code> and <code>-rule</code> pairs, defined for light and dark. Pages use these tokens or the shared classes below, never literal colors: lint reports literal colors in a page <code>&lt;style&gt;</code> as <code>hardcoded-color</code> (<code>@media print</code> is exempt).</p>
+      <div class="swatches" style="margin-top:12px"><div class="swatch"><div class="chip" style="background:var(--ok)"></div><div class="name">--ok</div><div class="hex">light #087554<br>dark #6ee7b7</div></div><div class="swatch"><div class="chip" style="background:var(--warn)"></div><div class="name">--warn</div><div class="hex">light #92400e<br>dark #fbbf24</div></div><div class="swatch"><div class="chip" style="background:var(--bad)"></div><div class="name">--bad</div><div class="hex">light #b42318<br>dark #fca5a5</div></div><div class="swatch"><div class="chip" style="background:var(--info)"></div><div class="name">--info</div><div class="hex">light #1d4ed8<br>dark #93c5fd</div></div></div>
+      <div class="badges-row" style="margin-top:16px"><span class="badge ok">OK</span><span class="badge warn">Watch</span><span class="badge bad">Risk</span><span class="badge info">Info</span></div>
+      <div class="stat-grid" style="margin-top:16px"><div class="metric-card ok"><span class="label">Metric card</span><strong>99.9%</strong><p><code>.metric-card.ok</code> in a <code>.stat-grid</code></p></div><div class="metric-card warn"><span class="label">Watch</span><strong>3</strong><p><code>.metric-card.warn</code></p></div><div class="metric-card bad"><span class="label">Risk</span><strong>1</strong><p><code>.metric-card.bad</code></p></div></div>
+      <div class="table-wrap"><table class="data-table stack"><thead><tr><th>Item</th><th>Status</th><th class="num">Value</th></tr></thead><tbody><tr><td data-label="Item">Backups</td><td data-label="Status"><span class="badge ok">OK</span></td><td data-label="Value" class="num">12</td></tr><tr><td data-label="Item">Certificates</td><td data-label="Status"><span class="badge warn">Expiring</span></td><td data-label="Value" class="num">2</td></tr></tbody></table></div>
+      <p class="source-line" style="margin-top:12px"><code>table.data-table</code> inside <code>.table-wrap</code> scrolls sideways when wide. Add <code>stack</code> and a <code>data-label</code> on each cell to turn rows into cards on phones. Also: <code>.text-ok|warn|bad|info</code> for inline values and <code>.accent-ok|warn|bad|info</code> for a left accent border.</p>
+    </div>
     <h2 class="section">Theme</h2>
     <p class="source-line"><code>cockpit-theme.js</code> loads in <code>&lt;head&gt;</code> and sets <code>&lt;html data-theme&gt;</code> to <code>system</code>, <code>light</code>, or <code>dark</code> before first paint. The choice is stored in <code>localStorage</code> under <code>cockpit-theme</code>. Without JavaScript the page follows <code>prefers-color-scheme</code> and the switcher stays hidden. The switcher is a radio group of three icon buttons (half circle = System, sun = Light, moon = Dark) fixed to the top-right corner inside the safe-area insets; while it is visible, <code>--cockpit-top-reserve</code> and <code>--cockpit-right-reserve</code> hold the space it needs.</p>
     <h2 class="section">Type</h2>
@@ -82,63 +91,99 @@
     <p class="source-line">Every starter page renders the search form as the first item in <code>nav.cockpit-nav</code>, matching the top-left search placement in the current private Cockpit.</p>
     <footer class="fineprint">This copied page and stylesheet belong to the knowledge repo. Change them freely.</footer>
   </main>
-  <script type="application/json" id="cockpit-data">
-  {
-    "kind": "cockpit-design-system",
-    "schema_version": 2,
-    "summary": "Starter design system page for user-owned styling.",
-    "register": "techy industrial console: mono body, gray canvas, thin rule borders, restrained green accent; light and dark palettes",
-    "tokens": {
-      "type": {
-        "body_family": "ui-monospace, SFMono-Regular, Cascadia Code, Cascadia Mono, Roboto Mono, IBM Plex Mono, JetBrains Mono, Liberation Mono, Menlo, Consolas, monospace",
-        "body_size_px": 16,
-        "line_height": 1.55
+  <script type="application/json" id="cockpit-data">{
+  "kind": "cockpit-design-system",
+  "schema_version": 2,
+  "summary": "Starter design system page for user-owned styling.",
+  "register": "techy industrial console: mono body, gray canvas, thin rule borders, restrained green accent; light and dark palettes",
+  "tokens": {
+    "type": {
+      "body_family": "ui-monospace, SFMono-Regular, Cascadia Code, Cascadia Mono, Roboto Mono, IBM Plex Mono, JetBrains Mono, Liberation Mono, Menlo, Consolas, monospace",
+      "body_size_px": 16,
+      "line_height": 1.55
+    },
+    "color": {
+      "light": {
+        "bg": "#ecedef",
+        "surface": "#ffffff",
+        "surface_2": "#f5f6f8",
+        "ink": "#0f1216",
+        "ink_soft": "#4a5159",
+        "ink_faint": "#5f6670",
+        "accent": "#047857",
+        "accent_ink": "#ffffff",
+        "accent_blue": "#2563eb",
+        "rule": "#d6d8dc",
+        "rule_strong": "#b4b8bd",
+        "focus": "#2563eb",
+        "ok": "#087554",
+        "ok_bg": "#e4f4ec",
+        "ok_rule": "#b7dfca",
+        "warn": "#92400e",
+        "warn_bg": "#fbf0dc",
+        "warn_rule": "#efd3a1",
+        "bad": "#b42318",
+        "bad_bg": "#fdecea",
+        "bad_rule": "#f3c3bd",
+        "info": "#1d4ed8",
+        "info_bg": "#e6edfb",
+        "info_rule": "#bccbf2"
       },
-      "color": {
-        "light": {
-          "bg": "#ecedef",
-          "surface": "#ffffff",
-          "surface_2": "#f5f6f8",
-          "ink": "#0f1216",
-          "ink_soft": "#4a5159",
-          "ink_faint": "#5f6670",
-          "accent": "#047857",
-          "accent_ink": "#ffffff",
-          "accent_blue": "#2563eb",
-          "rule": "#d6d8dc",
-          "rule_strong": "#b4b8bd",
-          "focus": "#2563eb"
-        },
-        "dark": {
-          "bg": "#0e1013",
-          "surface": "#16191d",
-          "surface_2": "#1d2126",
-          "ink": "#e6e8eb",
-          "ink_soft": "#a9b0b8",
-          "ink_faint": "#9aa1aa",
-          "accent": "#34d399",
-          "accent_ink": "#0e1013",
-          "accent_blue": "#60a5fa",
-          "rule": "#2a2f36",
-          "rule_strong": "#3b414a",
-          "focus": "#60a5fa"
-        }
-      },
-      "theme": {
-        "choices": ["system", "light", "dark"],
-        "default": "system",
-        "storage_key": "cockpit-theme",
-        "html_attribute": "data-theme",
-        "script": "cockpit-theme.js"
-      },
-      "layout": {
-        "left_nav_px": 220,
-        "page_max_width_px": 880,
-        "card_radius_px": 4,
-        "mobile_breakpoint_px": 480
+      "dark": {
+        "bg": "#0e1013",
+        "surface": "#16191d",
+        "surface_2": "#1d2126",
+        "ink": "#e6e8eb",
+        "ink_soft": "#a9b0b8",
+        "ink_faint": "#9aa1aa",
+        "accent": "#34d399",
+        "accent_ink": "#0e1013",
+        "accent_blue": "#60a5fa",
+        "rule": "#2a2f36",
+        "rule_strong": "#3b414a",
+        "focus": "#60a5fa",
+        "ok": "#6ee7b7",
+        "ok_bg": "#0c281e",
+        "ok_rule": "#1d5340",
+        "warn": "#fbbf24",
+        "warn_bg": "#2b2008",
+        "warn_rule": "#5c4513",
+        "bad": "#fca5a5",
+        "bad_bg": "#2e1111",
+        "bad_rule": "#6a2727",
+        "info": "#93c5fd",
+        "info_bg": "#13223f",
+        "info_rule": "#2a4374"
       }
-    }
+    },
+    "theme": {
+      "choices": [
+        "system",
+        "light",
+        "dark"
+      ],
+      "default": "system",
+      "storage_key": "cockpit-theme",
+      "html_attribute": "data-theme",
+      "script": "cockpit-theme.js"
+    },
+    "layout": {
+      "left_nav_px": 220,
+      "page_max_width_px": 880,
+      "card_radius_px": 4,
+      "mobile_breakpoint_px": 480
+    },
+    "components": [
+      "table.data-table (.stack)",
+      ".table-wrap",
+      ".badge.ok|warn|bad|info",
+      ".metric-card(.ok|warn|bad)",
+      ".stat-grid",
+      ".text-ok|warn|bad|info",
+      ".accent-ok|warn|bad|info"
+    ]
   }
+}
   </script>
 </body>
 </html>

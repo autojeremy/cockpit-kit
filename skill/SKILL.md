@@ -106,6 +106,9 @@ Maintain `.cockpit/nav.toml` and `.cockpit/sources.toml`; do not make the operat
 - Remove a nav entry when deleting its page or section.
 - After any nav change, run `node <skill-dir>/scripts/nav-sync.mjs --root "$COCKPIT_ROOT"` (under the write lock) so every page's inlined nav gets depth-correct links and the right `aria-current` marker. It is idempotent; `--check` reports drift without writing. A page's current item is the nav entry for its top-level folder (the Home entry on the root `index.html`); pages outside any nav entry mark none.
 - Optional nav.toml keys: `group = "<heading>"` on `[[nav]]` items (consecutive items with the same group render under one heading), and a top-level `hidden = ["<folder>/"]` list for sections that stay reachable but are kept out of the nav on purpose.
+- Add a source entry before using `upstream:<source-id>`.
+- Remove an unused source entry when no page references it anymore.
+- When changing a page between `self` and `upstream:<source-id>`, update the page, data block, and manifests in the same operation.
 
 ### Generated home cards (optional)
 
@@ -119,6 +122,10 @@ Do not delete a page that may be linked from elsewhere (other pages, comments, b
 
 Besides the per-page contract, `lint.mjs` warns (so `--strict` fails) on: `stale-nav`, `wrong-aria-current`, and `current-is-home` (fix with `nav-sync.mjs`); `unregistered-section` (a top-level folder with an `index.html` that is neither in the nav nor in `hidden`); `missing-home-card` (a nav section the home page does not link to; opt out with `home = false` on the nav entry); `home-data-drift` (home `cockpit-data.cards` disagree with the visible cards, or point at missing pages); and `orphan-page` (a page no other page links to outside nav and footer; section indexes and moved stubs are exempt).
 
+### Styling: tokens and shared components
+
+Pages use the theme tokens from `cockpit.css` (`--ink`, `--surface`, `--rule`, ...) and, for state, `--ok`, `--warn`, `--bad` and `--info` with their `-bg` and `-rule` pairs; all are defined for light and dark. Shared classes cover the common pieces: `table.data-table` inside `.table-wrap` (add `stack` plus a `data-label` on each cell for phone-width cards), `.badge.ok|warn|bad|info`, `.metric-card` in a `.stat-grid`, `.text-*` and `.accent-*`. The design-system page shows them. Lint warns `hardcoded-color` on a literal color in a page `<style>` block; `@media print` blocks are exempt, and custom-property literals pass only when the page also defines a dark value. Breadcrumbs use `<span class="sep">/</span>` with relative links.
+
 ### New section checklist
 
 1. Create `<section>/index.html` with a one-line summary (`<meta name="description">` and `cockpit-data.summary`) and links to every page in the section.
@@ -126,9 +133,6 @@ Besides the per-page contract, `lint.mjs` warns (so `--strict` fails) on: `stale
 3. Run `nav-sync.mjs` to rewrite every page's nav.
 4. Make sure the home page lists the section: run `home-sync.mjs` if the home cards are generated (give the nav entry a `summary`), otherwise add a card by hand.
 5. Run `search-index.mjs` and `lint.mjs --strict`, then commit only the files you touched.
-- Add a source entry before using `upstream:<source-id>`.
-- Remove an unused source entry when no page references it anymore.
-- When changing a page between `self` and `upstream:<source-id>`, update the page, data block, and manifests in the same operation.
 
 ## Git Discipline
 
