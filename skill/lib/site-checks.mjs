@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { decodeEntities, expectedCurrentIndex, hrefSection, isHomeHref } from './nav.mjs';
+import { hasHomeCardMarkers, homeCards as navHomeCards, syncHomeHtml } from './home.mjs';
 
 // Cross-page checks run by lint.mjs: sections missing from the nav, orphan pages,
 // and home-page card data that drifted from the visible cards.
@@ -117,6 +118,12 @@ export function siteFindings({ root, pages, nav }) {
       if (isHomeHref(item.href) || item.home === false) continue;
       const target = resolveLink(root, 'index.html', item.href);
       if (target && byPath.has(target) && !homeTargets.has(target)) add('index.html', 'missing-home-card', `Home page has no card or link for nav section "${item.label}" (${item.href}); add one or set home = false on the nav entry`);
+    }
+
+    if (hasHomeCardMarkers(home.html)) {
+      let next;
+      try { next = syncHomeHtml(home.html, navHomeCards(root, nav.items)); } catch { next = home.html; }
+      if (next !== home.html) add('index.html', 'stale-home-cards', 'Home cards are out of date with .cockpit/nav.toml (run home-sync.mjs)');
     }
 
     // home-data-drift: cockpit-data.cards vs visible cards.
