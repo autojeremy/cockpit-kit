@@ -246,7 +246,7 @@ export function pageHref(pagePath) {
   return `/${pagePath}`;
 }
 
-export function extractIndexPage({ pagePath, html }) {
+export function extractIndexPage({ pagePath, html, section: sectionLabel }) {
   const scanned = scanHtml(html);
   const title = stripTags(scanned.tags.find((tag) => tag.name === 'title')?.content) || stripTags(scanned.tags.find((tag) => tag.name === 'h1')?.content) || pagePath;
   const headings = scanned.tags
@@ -259,7 +259,7 @@ export function extractIndexPage({ pagePath, html }) {
     try { data = JSON.parse(block.content); } catch { data = {}; }
   }
   const summary = typeof data.summary === 'string' ? data.summary : typeof data.description === 'string' ? data.description : '';
-  const section = headings[0]?.text ?? title;
+  const section = typeof sectionLabel === 'string' ? sectionLabel : (headings[0]?.text ?? title);
   const withoutSkipped = scanned.html.replace(/<(script|style|nav|footer)\b[\s\S]*?<\/\1>/gi, ' ');
   const visible = stripTags(withoutSkipped);
   const text = redactSecrets(`${title} ${section} ${headings.map((h) => h.text).join(' ')} ${summary} ${textFromData(data)} ${visible}`).replace(/\s+/g, ' ').trim().slice(0, INDEX_TEXT_LIMIT);
