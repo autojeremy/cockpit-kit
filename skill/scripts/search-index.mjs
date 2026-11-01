@@ -5,9 +5,24 @@ import { resolveRoot } from '../lib/config.mjs';
 import { assertNode20 } from '../lib/paths.mjs';
 import { EXIT_BUSY, LockError, assertWriteAllowed, parseDuration, validateHolder } from '../lib/lock.mjs';
 import { buildSearchIndex, discoverHtmlPages, extractIndexPage, renderedAtForHtml, rootRelative } from '../lib/contract.mjs';
+import { expectedCurrentIndex, pageSection, readNavManifest } from '../lib/nav.mjs';
+import { isMovedStub } from '../lib/site-checks.mjs';
+
+// Section label for search results: the nav label of the page's top-level folder,
+// a title-cased folder name for sections outside the nav, or "" for root pages.
+function sectionLabel(nav, pagePath) {
+  const index = expectedCurrentIndex(nav.items, pagePath);
+  if (index >= 0) return nav.items[index].label;
+  if (!pagePath.includes('/')) return '';
+  return pageSection(pagePath).replace(/[-_]+/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase());
+}
 
 function usage() {
   return `Usage: node scripts/search-index.mjs [--root <path>] [--holder <name>] [--lock-wait <duration>]
+
+Each record's section is the nav label of the page's top-level folder. Moved
+stubs (cockpit-data kind "moved", a cockpit:moved-to meta, or a meta refresh)
+are skipped so they stay out of search.
 
 If another agent holds the cockpit write lock (see lock.mjs), waits up to
 --lock-wait (default 10s) and then fails with exit status ${EXIT_BUSY}. Pass --holder (or
@@ -46,12 +61,14 @@ function parseArgs(argv) {
 }
 
 function generate(root) {
-  const files = discoverHtmlPages(root);
-  const pages = files.map((file) => {
+  const nav = readNavManifest(root);
+  const pages = [];
+  for (const file of discoverHtmlPages(root)) {
     const pagePath = rootRelative(root, file);
     const html = fs.readFileSync(file, 'utf8');
-    return { renderedAt: renderedAtForHtml(html), record: extractIndexPage({ pagePath, html }) };
-  });
+    if (isMovedStub(html)) continue; // moved stubs keep old links working but stay out of search
+    pages.push({ renderedAt: renderedAtForHtml(html), record: extractIndexPage({ pagePath, html, section: nav.present ? sectionLabel(nav, pagePath) : undefined }) });
+  }
   return buildSearchIndex(pages);
 }
 

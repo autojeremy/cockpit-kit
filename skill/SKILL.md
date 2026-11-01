@@ -107,6 +107,14 @@ Maintain `.cockpit/nav.toml` and `.cockpit/sources.toml`; do not make the operat
 - After any nav change, run `node <skill-dir>/scripts/nav-sync.mjs --root "$COCKPIT_ROOT"` (under the write lock) so every page's inlined nav gets depth-correct links and the right `aria-current` marker. It is idempotent; `--check` reports drift without writing. A page's current item is the nav entry for its top-level folder (the Home entry on the root `index.html`); pages outside any nav entry mark none.
 - Optional nav.toml keys: `group = "<heading>"` on `[[nav]]` items (consecutive items with the same group render under one heading), and a top-level `hidden = ["<folder>/"]` list for sections that stay reachable but are kept out of the nav on purpose.
 
+### Moving pages
+
+Do not delete a page that may be linked from elsewhere (other pages, comments, bots' notes). Write it at the new path with relative links fixed, then leave a moved stub at the old path: a normal contract page with `<meta name="cockpit:moved-to" content="<new relative href>">`, a `<meta http-equiv="refresh" content="0; url=<new relative href>">`, a short "has moved" link, and `cockpit-data` `{"kind": "moved", "schema_version": 1, "moved_to": "<new relative href>"}`. `search-index.mjs` skips stubs and lint does not count them as orphans.
+
+### Site checks in lint
+
+Besides the per-page contract, `lint.mjs` warns (so `--strict` fails) on: `stale-nav`, `wrong-aria-current`, and `current-is-home` (fix with `nav-sync.mjs`); `unregistered-section` (a top-level folder with an `index.html` that is neither in the nav nor in `hidden`); `missing-home-card` (a nav section the home page does not link to; opt out with `home = false` on the nav entry); `home-data-drift` (home `cockpit-data.cards` disagree with the visible cards, or point at missing pages); and `orphan-page` (a page no other page links to outside nav and footer; section indexes and moved stubs are exempt).
+
 ### New section checklist
 
 1. Create `<section>/index.html` with a one-line summary (`<meta name="description">` and `cockpit-data.summary`) and links to every page in the section.
