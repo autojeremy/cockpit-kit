@@ -112,3 +112,29 @@ test('helpers: stub detection, link resolution, entity decoding', () => {
   assert.equal(resolveLink(root, 'index.html', 'https://example.net/'), undefined);
   assert.equal(decodeEntities('Isaiah&#x27;s &amp; Widow&#39;s &rsquo; &bogus;'), "Isaiah's & Widow's ’ &bogus;");
 });
+
+test('home-sync renders grouped cards from nav.toml and lint flags stale cards', () => {
+  const manifest = '[[nav]]\nlabel = "Home"\nhref = "index.html"\n\n[[nav]]\nlabel = "Food"\nhref = "food/"\ngroup = "Life"\nsummary = "Places & plates"\ntags = ["log"]\n\n[[nav]]\nlabel = "Notes"\nhref = "notes/"\ngroup = "Work"\n\n[[nav]]\nlabel = "Inbox"\nhref = "inbox/"\ngroup = "Ops"\nhome = false\n';
+  const root = makeRoot(manifest);
+  const homeSync = path.join(repoRoot, 'skill', 'scripts', 'home-sync.mjs');
+  write(root, 'index.html', page({ body: '<h1>Home</h1>\n    <!-- cockpit:home-cards -->\n    <!-- /cockpit:home-cards -->', data: '{"kind":"home","schema_version":1}' }));
+  write(root, 'food/index.html', page({ title: 'Food' }));
+  write(root, 'notes/index.html', page({ title: 'Notes', head: '<meta name="description" content="Working notes &amp; drafts">' }));
+  write(root, 'inbox/index.html', page({ title: 'Inbox' }));
+  const check = spawnSync(process.execPath, [homeSync, '--root', root, '--check'], { encoding: 'utf8' });
+  assert.equal(check.status, 1);
+  let { findings } = lint(root);
+  assert.ok(findings.some((f) => f.code === 'stale-home-cards'));
+  const run = spawnSync(process.execPath, [homeSync, '--root', root], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  assert.match(html, /<h2 class="section">Life<\/h2>[\s\S]*<h3>Food<\/h3>\s*<p>Places &amp; plates<\/p>\s*<div class="tags"><span>log<\/span><\/div>/);
+  assert.match(html, /<h2 class="section">Work<\/h2>[\s\S]*<h3>Notes<\/h3>\s*<p>Working notes &amp; drafts<\/p>/);
+  assert.doesNotMatch(html, /<h3>Inbox<\/h3>/);
+  const data = JSON.parse(/id="cockpit-data">([\s\S]*?)<\/script>/.exec(html)[1]);
+  assert.deepEqual(data.cards.map((card) => card.title), ['Food', 'Notes']);
+  ({ findings } = lint(root));
+  assert.deepEqual(findings, []);
+  const again = spawnSync(process.execPath, [homeSync, '--root', root, '--check'], { encoding: 'utf8' });
+  assert.equal(again.status, 0, again.stdout);
+});

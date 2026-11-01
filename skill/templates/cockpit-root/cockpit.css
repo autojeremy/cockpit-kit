@@ -167,6 +167,13 @@ nav.cockpit-nav .home {
   font-family: var(--mono); font-weight: 700;
 }
 nav.cockpit-nav .home::before { content: "// "; color: var(--accent); }
+/* Nav groups (nav.toml `group = "..."`): a small heading over related items. */
+nav.cockpit-nav .nav-group { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
+nav.cockpit-nav .nav-group-label {
+  padding: 4px 8px 2px;
+  font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
 nav.cockpit-nav .nav-search {
   margin: 0 0 14px;
   padding: 0 0 14px;
@@ -587,6 +594,9 @@ nav.page-toc { display: none; }
     border-bottom: none;
   }
   nav.cockpit-nav a { padding: 5px 8px; }
+  /* Groups flatten into the wrapped row; the label stays as a visible separator. */
+  nav.cockpit-nav .nav-group { display: contents; }
+  nav.cockpit-nav .nav-group-label { padding: 5px 4px 5px 10px; border-left: 1px solid var(--rule-strong); margin-left: 4px; }
   nav.cockpit-nav .nav-search {
     flex: 1 0 100%;
     margin: 0 0 8px;

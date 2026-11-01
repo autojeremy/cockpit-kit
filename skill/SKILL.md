@@ -107,6 +107,10 @@ Maintain `.cockpit/nav.toml` and `.cockpit/sources.toml`; do not make the operat
 - After any nav change, run `node <skill-dir>/scripts/nav-sync.mjs --root "$COCKPIT_ROOT"` (under the write lock) so every page's inlined nav gets depth-correct links and the right `aria-current` marker. It is idempotent; `--check` reports drift without writing. A page's current item is the nav entry for its top-level folder (the Home entry on the root `index.html`); pages outside any nav entry mark none.
 - Optional nav.toml keys: `group = "<heading>"` on `[[nav]]` items (consecutive items with the same group render under one heading), and a top-level `hidden = ["<folder>/"]` list for sections that stay reachable but are kept out of the nav on purpose.
 
+### Generated home cards (optional)
+
+If the root `index.html` contains `<!-- cockpit:home-cards -->` and `<!-- /cockpit:home-cards -->`, run `node <skill-dir>/scripts/home-sync.mjs --root "$COCKPIT_ROOT"` after nav changes. It renders one card per nav entry (grouped under the nav groups; Home and entries with `home = false` are skipped) and rewrites `cockpit-data.cards` to match. Card text comes from the entry's `summary` (and `tags`) in nav.toml, else the section index's meta description, else its `cockpit-data.summary`. Lint reports `stale-home-cards` when the region is out of date.
+
 ### Moving pages
 
 Do not delete a page that may be linked from elsewhere (other pages, comments, bots' notes). Write it at the new path with relative links fixed, then leave a moved stub at the old path: a normal contract page with `<meta name="cockpit:moved-to" content="<new relative href>">`, a `<meta http-equiv="refresh" content="0; url=<new relative href>">`, a short "has moved" link, and `cockpit-data` `{"kind": "moved", "schema_version": 1, "moved_to": "<new relative href>"}`. `search-index.mjs` skips stubs and lint does not count them as orphans.
@@ -120,7 +124,7 @@ Besides the per-page contract, `lint.mjs` warns (so `--strict` fails) on: `stale
 1. Create `<section>/index.html` with a one-line summary (`<meta name="description">` and `cockpit-data.summary`) and links to every page in the section.
 2. Add a `[[nav]]` entry to `.cockpit/nav.toml` in the right group (or list the folder in `hidden`).
 3. Run `nav-sync.mjs` to rewrite every page's nav.
-4. Make sure the home page lists the section (a card, or run the home card generator if the cockpit uses one).
+4. Make sure the home page lists the section: run `home-sync.mjs` if the home cards are generated (give the nav entry a `summary`), otherwise add a card by hand.
 5. Run `search-index.mjs` and `lint.mjs --strict`, then commit only the files you touched.
 - Add a source entry before using `upstream:<source-id>`.
 - Remove an unused source entry when no page references it anymore.
