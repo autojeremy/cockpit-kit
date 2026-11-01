@@ -4,6 +4,7 @@ import path from 'node:path';
 import { resolveRoot, validateCockpitRoot } from '../lib/config.mjs';
 import { assertNode20 } from '../lib/paths.mjs';
 import { parseToml } from '../lib/toml.mjs';
+import { readNavManifest } from '../lib/nav.mjs';
 import { checkPage, checkSearchIndex, cssFixedWidthFindings, discoverHtmlPages, renderedAtForHtml, rootRelative } from '../lib/contract.mjs';
 
 function usage() {
@@ -36,11 +37,7 @@ function parseArgs(argv) {
 }
 
 function readNav(root) {
-  const file = path.join(root, '.cockpit', 'nav.toml');
-  if (!fs.existsSync(file)) return { present: false, items: [] };
-  const parsed = parseToml(fs.readFileSync(file, 'utf8'));
-  const items = Array.isArray(parsed.nav) ? parsed.nav.filter((item) => typeof item.label === 'string' && typeof item.href === 'string').map((item) => ({ label: item.label, href: item.href })) : [];
-  return { present: true, items };
+  return readNavManifest(root);
 }
 
 function readSources(root) {

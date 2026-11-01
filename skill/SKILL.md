@@ -104,7 +104,16 @@ Maintain `.cockpit/nav.toml` and `.cockpit/sources.toml`; do not make the operat
 
 - Add a nav entry when adding a top-level page or section.
 - Remove a nav entry when deleting its page or section.
-- Re-render affected pages after nav changes so inlined nav stays fresh.
+- After any nav change, run `node <skill-dir>/scripts/nav-sync.mjs --root "$COCKPIT_ROOT"` (under the write lock) so every page's inlined nav gets depth-correct links and the right `aria-current` marker. It is idempotent; `--check` reports drift without writing. A page's current item is the nav entry for its top-level folder (the Home entry on the root `index.html`); pages outside any nav entry mark none.
+- Optional nav.toml keys: `group = "<heading>"` on `[[nav]]` items (consecutive items with the same group render under one heading), and a top-level `hidden = ["<folder>/"]` list for sections that stay reachable but are kept out of the nav on purpose.
+
+### New section checklist
+
+1. Create `<section>/index.html` with a one-line summary (`<meta name="description">` and `cockpit-data.summary`) and links to every page in the section.
+2. Add a `[[nav]]` entry to `.cockpit/nav.toml` in the right group (or list the folder in `hidden`).
+3. Run `nav-sync.mjs` to rewrite every page's nav.
+4. Make sure the home page lists the section (a card, or run the home card generator if the cockpit uses one).
+5. Run `search-index.mjs` and `lint.mjs --strict`, then commit only the files you touched.
 - Add a source entry before using `upstream:<source-id>`.
 - Remove an unused source entry when no page references it anymore.
 - When changing a page between `self` and `upstream:<source-id>`, update the page, data block, and manifests in the same operation.
