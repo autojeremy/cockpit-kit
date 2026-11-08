@@ -100,13 +100,16 @@ export function renderNavItems(items, pagePath, indent = '      ') {
   const current = expectedCurrentIndex(items, pagePath);
   const link = ({ item, index }, pad) => `${pad}<a href="${escapeHtml(/^(?:[a-z][a-z0-9+.-]*:|\/|#)/i.test(item.href) ? item.href : `${prefix}${item.href}`)}"${index === current ? ' aria-current="page"' : ''}>${escapeHtml(item.label)}</a>`;
   const lines = [];
-  let groupIndex = 0;
+  const groupIds = new Set();
   for (const group of groupItems(items)) {
     if (!group.group) {
       for (const entry of group.items) lines.push(link(entry, indent));
       continue;
     }
-    const groupId = `nav-group-${slug(group.group)}-${++groupIndex}`;
+    const baseId = `nav-group-${slug(group.group)}`;
+    let groupId = baseId;
+    for (let suffix = 2; groupIds.has(groupId); suffix += 1) groupId = `${baseId}-${suffix}`;
+    groupIds.add(groupId);
     lines.push(`${indent}<div class="nav-group" role="group" aria-labelledby="${groupId}">`);
     lines.push(`${indent}  <span class="nav-group-label" id="${groupId}">${escapeHtml(group.group)}</span>`);
     for (const entry of group.items) lines.push(link(entry, `${indent}  `));
