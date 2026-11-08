@@ -104,10 +104,35 @@ Maintain `.cockpit/nav.toml` and `.cockpit/sources.toml`; do not make the operat
 
 - Add a nav entry when adding a top-level page or section.
 - Remove a nav entry when deleting its page or section.
-- Re-render affected pages after nav changes so inlined nav stays fresh.
+- After any nav change, run `node <skill-dir>/scripts/nav-sync.mjs --root "$COCKPIT_ROOT"` (under the write lock) so every page's inlined nav gets depth-correct links and the right `aria-current` marker. It is idempotent; `--check` reports drift without writing. A page's current item is the nav entry for its top-level folder (the Home entry on the root `index.html`); pages outside any nav entry mark none.
+- Optional nav.toml keys: `group = "<heading>"` on `[[nav]]` items (consecutive items with the same group render under one heading), and a top-level `hidden = ["<folder>/"]` list for sections that stay reachable but are kept out of the nav on purpose.
 - Add a source entry before using `upstream:<source-id>`.
 - Remove an unused source entry when no page references it anymore.
 - When changing a page between `self` and `upstream:<source-id>`, update the page, data block, and manifests in the same operation.
+
+### Generated home cards (optional)
+
+If the root `index.html` contains `<!-- cockpit:home-cards -->` and `<!-- /cockpit:home-cards -->`, run `node <skill-dir>/scripts/home-sync.mjs --root "$COCKPIT_ROOT"` after nav changes. It renders one card per nav entry (grouped under the nav groups; Home and entries with `home = false` are skipped) and rewrites `cockpit-data.cards` to match. Card text comes from the entry's `summary` (and `tags`) in nav.toml, else the section index's meta description, else its `cockpit-data.summary`. Lint reports `stale-home-cards` when the region is out of date.
+
+### Moving pages
+
+Do not delete a page that may be linked from elsewhere (other pages, comments, bots' notes). Write it at the new path with relative links fixed, then leave a moved stub at the old path: a normal contract page with `<meta name="cockpit:moved-to" content="<new relative href>">`, a `<meta http-equiv="refresh" content="0; url=<new relative href>">`, a short "has moved" link, and `cockpit-data` `{"kind": "moved", "schema_version": 1, "moved_to": "<new relative href>"}`. `search-index.mjs` skips stubs and lint does not count them as orphans.
+
+### Site checks in lint
+
+Besides the per-page contract, `lint.mjs` warns (so `--strict` fails) on: `stale-nav`, `wrong-aria-current`, and `current-is-home` (fix with `nav-sync.mjs`); `unregistered-section` (a top-level folder with an `index.html` that is neither in the nav nor in `hidden`); `missing-home-card` (a nav section the home page does not link to; opt out with `home = false` on the nav entry); `home-data-drift` (home `cockpit-data.cards` disagree with the visible cards, or point at missing pages); and `orphan-page` (a page no other page links to outside nav and footer; section indexes and moved stubs are exempt).
+
+### Styling: tokens and shared components
+
+Pages use the theme tokens from `cockpit.css` (`--ink`, `--surface`, `--rule`, ...) and, for state, `--ok`, `--warn`, `--bad` and `--info` with their `-bg` and `-rule` pairs; all are defined for light and dark. Shared classes cover the common pieces: `table.data-table` inside `.table-wrap` (add `stack` plus a `data-label` on each cell for phone-width cards), `.badge.ok|warn|bad|info`, `.metric-card` in a `.stat-grid`, `.text-*` and `.accent-*`. The design-system page shows them. Lint warns `hardcoded-color` on a literal color in a page `<style>` block; `@media print` blocks are exempt, and custom-property literals pass only when the page also defines a dark value. Breadcrumbs use `<span class="sep">/</span>` with relative links.
+
+### New section checklist
+
+1. Create `<section>/index.html` with a one-line summary (`<meta name="description">` and `cockpit-data.summary`) and links to every page in the section.
+2. Add a `[[nav]]` entry to `.cockpit/nav.toml` in the right group (or list the folder in `hidden`).
+3. Run `nav-sync.mjs` to rewrite every page's nav.
+4. Make sure the home page lists the section: run `home-sync.mjs` if the home cards are generated (give the nav entry a `summary`), otherwise add a card by hand.
+5. Run `search-index.mjs` and `lint.mjs --strict`, then commit only the files you touched.
 
 ## Git Discipline
 
@@ -122,6 +147,29 @@ If `COCKPIT_ROOT/.git/` exists, commit every file-changing operation in the know
 - If status is empty, do not create an empty commit.
 
 Never run ambient `git add` or `git commit` from the caller's current directory.
+
+## Write Lock (shared Cockpits)
+
+When more than one agent may write to `COCKPIT_ROOT` (several local agents, or agents connecting over SSH), serialize every file-changing operation with the advisory write lock. Check who holds it with:
+
+```bash
+node <skill-dir>/scripts/lock.mjs status --root "$COCKPIT_ROOT"
+```
+
+- Pick a short, stable holder name that is unique to you (for example your agent name), and use it consistently.
+- Wrap each complete edit, lint, index, commit, push operation in one `lock run`, so the lock is released even if a step fails:
+
+  ```bash
+  node <skill-dir>/scripts/lock.mjs run --holder <your-name> --purpose "<short note>" --wait 2m --root "$COCKPIT_ROOT" -- \
+    sh -c '<your edit/render step> && node <skill-dir>/scripts/lint.mjs --root "$COCKPIT_ROOT" && node <skill-dir>/scripts/search-index.mjs --root "$COCKPIT_ROOT" && git -C "$COCKPIT_ROOT" add -- <your files> .cockpit/search-index.json && git -C "$COCKPIT_ROOT" commit -m "<type>: <subject>" && git -C "$COCKPIT_ROOT" pull --rebase && git -C "$COCKPIT_ROOT" push'
+  ```
+
+  Commands inside `lock run` see `COCKPIT_LOCK_HOLDER`, so `search-index.mjs` proceeds under your lock. Outside a lock, pass `--holder <your-name>` to `search-index.mjs` only if you hold the lock.
+- To hold the lock across several separate tool calls, `lock.mjs acquire --holder <your-name> --purpose "..." --wait 2m` first and always `lock.mjs release --holder <your-name>` at the end, including after failures. Keep `--ttl` (default `10m`) longer than the work, or re-run `acquire` to renew.
+- Inside the lock: stage only the files you touched (never `git add -A`), and `git -C "$COCKPIT_ROOT" pull --rebase` before `push`. If the rebase conflicts, resolve it or abort it before releasing; never force-push.
+- If the lock is busy (exit status `75`), wait and retry; do not delete `.cockpit/lock` and do not use `release --force`. `--force` is for the operator, or when the operator tells you the holder is gone. Expired locks and locks whose process died on the same host are taken over automatically.
+- Never commit `.cockpit/lock*`. If `lock.mjs` warns that the lock is not gitignored, tell the operator and propose adding `/.cockpit/lock*` to the repo's `.gitignore`.
+- The lock is advisory. It only protects agents that use it, so use it for every write, including manifest and nav edits.
 
 ## Operator Request Queue
 
@@ -143,6 +191,7 @@ node <skill-dir>/scripts/intents.mjs list --root "$COCKPIT_ROOT"
 5. Otherwise make the change with the normal Render/Re-render workflow, regenerate search, lint, and commit. Do not copy request IDs, operator text, or payload into pages, commit messages, or `.cockpit/`; deliberately adopted content is fine.
 6. Record the outcome: `intents.mjs resolve <id> --claim <token> --outcome changed --summary "..." --page /route/ --commit <sha>`. Use `already_satisfied`, `answered`, or `declined` (with a summary, no commit) when nothing changed. `changed` requires a commit that exists in the knowledge repo.
 7. If you must stop without finishing, `intents.mjs release <id> --claim <token>` so the request returns to Pending. While you hold a claim the operator cannot add follow-ups or cancel, so never leave a claim behind.
+8. If a claim is stuck because its token was lost, `intents.mjs release <id> --force --reason "..." --consumer <your-name>` clears the claim without the token, returns the request to Pending, and records who, when, and why in `processing.history`. Like the lock's `--force`, this is for the operator, or when the operator tells you the holder lost its token or is gone; never use it to take over another agent's live work.
 
 The CLI cannot create requests or operator replies; only the authenticated browser service can.
 
@@ -162,4 +211,5 @@ Before reporting success:
 - `.cockpit/nav.toml` and `.cockpit/sources.toml` are consistent with touched pages.
 - After render/delete, `node <skill-dir>/scripts/search-index.mjs --root "$COCKPIT_ROOT"` was run, or reported as a Phase 3 deferred script if absent.
 - If `COCKPIT_ROOT/.git/` exists, only files touched by this operation were staged and committed with `git -C "$COCKPIT_ROOT"`.
+- In a shared Cockpit, the operation ran under `lock.mjs run` (or an acquire/release pair) and the lock is released.
 - Run `node <skill-dir>/scripts/lint.mjs --root "$COCKPIT_ROOT"` in non-strict mode when available, and report all warnings to the user.

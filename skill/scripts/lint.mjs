@@ -4,6 +4,8 @@ import path from 'node:path';
 import { resolveRoot, validateCockpitRoot } from '../lib/config.mjs';
 import { assertNode20 } from '../lib/paths.mjs';
 import { parseToml } from '../lib/toml.mjs';
+import { readNavManifest } from '../lib/nav.mjs';
+import { isMovedStub, siteFindings } from '../lib/site-checks.mjs';
 import { checkPage, checkSearchIndex, cssFixedWidthFindings, discoverHtmlPages, renderedAtForHtml, rootRelative } from '../lib/contract.mjs';
 
 function usage() {
@@ -36,11 +38,7 @@ function parseArgs(argv) {
 }
 
 function readNav(root) {
-  const file = path.join(root, '.cockpit', 'nav.toml');
-  if (!fs.existsSync(file)) return { present: false, items: [] };
-  const parsed = parseToml(fs.readFileSync(file, 'utf8'));
-  const items = Array.isArray(parsed.nav) ? parsed.nav.filter((item) => typeof item.label === 'string' && typeof item.href === 'string').map((item) => ({ label: item.label, href: item.href })) : [];
-  return { present: true, items };
+  return readNavManifest(root);
 }
 
 function readSources(root) {
@@ -62,18 +60,24 @@ function lintRoot(root) {
   findings.push(...prefixFindings('error', 'cockpit.css', cssFixedWidthFindings(stylesheet, 'cockpit.css')));
   const pagePaths = [];
   const renderedAts = [];
+  const pages = [];
   for (const file of files) {
     const pagePath = rootRelative(root, file);
-    pagePaths.push(pagePath);
     const html = fs.readFileSync(file, 'utf8');
-    renderedAts.push(renderedAtForHtml(html));
+    pages.push({ pagePath, html });
+    if (!isMovedStub(html)) {
+      pagePaths.push(pagePath);
+      renderedAts.push(renderedAtForHtml(html));
+    }
     const result = checkPage({ pagePath, html, navItems: nav.items, navManifestPresent: nav.present, sourceIds });
     findings.push(...prefixFindings('error', pagePath, result.errors));
     findings.push(...prefixFindings('warning', pagePath, result.warnings));
   }
 
+  findings.push(...siteFindings({ root, pages, nav }));
+
   const indexPath = path.join(root, '.cockpit', 'search-index.json');
-  if (files.length > 0 && !fs.existsSync(indexPath)) findings.push({ severity: 'warning', path: '.cockpit/search-index.json', code: 'missing-search-index', message: 'HTML pages exist but search-index.json is missing' });
+  if (pagePaths.length > 0 && !fs.existsSync(indexPath)) findings.push({ severity: 'warning', path: '.cockpit/search-index.json', code: 'missing-search-index', message: 'HTML pages exist but search-index.json is missing' });
   else if (fs.existsSync(indexPath)) {
     try {
       const index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));

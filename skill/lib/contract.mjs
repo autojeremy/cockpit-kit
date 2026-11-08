@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { isPathInside } from './paths.mjs';
+import { decodeEntities as decodeHtmlEntities, expectedCurrentIndex, isHomeHref, parseNav } from './nav.mjs';
+import { hardcodedColorFindings } from './css-colors.mjs';
 
 export const SEARCH_INDEX_SENTINEL = '1970-01-01T00:00:00Z';
 export const INDEX_TEXT_LIMIT = 12000;
@@ -74,12 +76,7 @@ function stripTags(value) {
 }
 
 function decodeEntities(value) {
-  return value
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+  return decodeHtmlEntities(value);
 }
 
 // Minimal tolerant scanner for the page contract. It recognizes normal start tags,
@@ -116,19 +113,6 @@ export function parseDataBlocks(scanned) {
   return scanned.tags.filter((tag) => tag.name === 'script' && tag.attrs.id === 'cockpit-data' && tag.attrs.type === 'application/json');
 }
 
-function parseNavLinks(scanned) {
-  const nav = scanned.tags.find((tag) => tag.name === 'nav');
-  if (!nav) return undefined;
-  const links = [];
-  const linkPattern = /<a\s([^>]*?)>([\s\S]*?)<\/a>/gi;
-  let match;
-  while ((match = linkPattern.exec(nav.content))) {
-    const attrs = parseAttrs(match[1]);
-    links.push({ label: stripTags(match[2]), href: attrs.href ?? '', current: attrs['aria-current'] === 'page' });
-  }
-  return links;
-}
-
 function normalizeManifestHref(href) {
   const normalized = String(href ?? '').replace(/^\.\//, '').replace(/^\//, '');
   return normalized === '' ? '' : normalized.replace(/\/+$/, '');
@@ -150,7 +134,7 @@ function pageDepth(pagePath) {
 
 function expectedForPage(navItems, pagePath) {
   const prefix = pageDepth(pagePath) === 0 ? '' : '../'.repeat(pageDepth(pagePath));
-  return navItems.map((item) => ({ label: item.label, href: `${prefix}${item.href}` }));
+  return navItems.map((item) => ({ label: item.label, href: `${prefix}${item.href}`, ...(item.group ? { group: item.group } : {}) }));
 }
 
 export function cssFixedWidthFindings(css, source) {
@@ -207,23 +191,35 @@ export function checkPage({ pagePath, html, navItems, navManifestPresent = false
   if (!viewport) errors.push(finding('missing-viewport', 'Missing viewport meta tag'));
   else if (!/(^|,)\s*width\s*=\s*device-width\s*(,|$)/.test(viewport) || !/(^|,)\s*initial-scale\s*=\s*1(?:\.0+)?\s*(,|$)/.test(viewport)) errors.push(finding('invalid-viewport', 'Viewport must include width=device-width and initial-scale=1'));
 
-  const navLinks = parseNavLinks(scanned);
+  const parsedNav = parseNav(html);
+  const navLinks = parsedNav?.links;
   if (!navLinks) errors.push(finding('missing-nav', 'Missing nav element'));
   else if (navLinks.length === 0) errors.push(finding('empty-nav', 'Nav contains no links'));
   else {
     const currentCount = navLinks.filter((link) => link.current).length;
-    if (currentCount === 0) warnings.push(finding('no-aria-current', 'No nav link has aria-current="page"'));
+    const items = navLinks.filter((link) => !link.brand && link.label !== 'Cockpit');
+    const expectedIndex = navManifestPresent ? expectedCurrentIndex(navItems, pagePath) : -1;
+    const needsCurrent = !navManifestPresent || expectedIndex >= 0 || pagePath === 'index.html';
+    if (currentCount === 0 && needsCurrent) warnings.push(finding('no-aria-current', 'No nav link has aria-current="page"'));
     if (currentCount > 1) warnings.push(finding('multiple-aria-current', 'More than one nav link has aria-current="page"'));
+    const currentHome = pagePath !== 'index.html'
+      && navLinks.find((link) => link.current && isHomeHref(resolvePageHref(link.href, pagePath)));
+    if (currentHome) warnings.push(finding('current-is-home', `Non-home page marks "${currentHome.label}" as the current nav item (run nav-sync.mjs)`));
     if (!navManifestPresent) warnings.push(finding('no-nav-manifest', 'No readable .cockpit/nav.toml for nav comparison'));
     else {
-      const actual = navLinks.filter((link) => link.label !== 'Cockpit').map((link) => ({ label: link.label, href: resolvePageHref(link.href, pagePath) }));
-      const expected = navItems.map((item) => ({ label: item.label, href: normalizeManifestHref(item.href) }));
-      if (JSON.stringify(actual) !== JSON.stringify(expected)) warnings.push(finding('stale-nav', `Nav does not match manifest; expected ${JSON.stringify(expectedForPage(navItems, pagePath))}`));
+      const actual = items.map((link) => ({ label: link.label, href: resolvePageHref(link.href, pagePath), group: link.group ?? null }));
+      const expected = navItems.map((item) => ({ label: item.label, href: normalizeManifestHref(item.href), group: item.group ?? null }));
+      if (JSON.stringify(actual) !== JSON.stringify(expected)) warnings.push(finding('stale-nav', `Nav does not match manifest (run nav-sync.mjs); expected ${JSON.stringify(expectedForPage(navItems, pagePath))}`));
+      else if (currentCount > 0) {
+        const currentIndex = items.findIndex((link) => link.current);
+        if (!currentHome && currentIndex >= 0 && currentIndex !== expectedIndex) warnings.push(finding('wrong-aria-current', `Nav marks "${navItems[currentIndex].label}" current; expected ${expectedIndex >= 0 ? `"${navItems[expectedIndex].label}"` : 'no item'} for this page's section (run nav-sync.mjs)`));
+      }
     }
   }
 
   const styleText = scanned.tags.filter((tag) => tag.name === 'style').map((tag) => tag.content).join('\n');
   errors.push(...cssFixedWidthFindings(styleText, pagePath));
+  warnings.push(...hardcodedColorFindings(styleText));
   return { errors, warnings, scanned };
 }
 
@@ -254,7 +250,7 @@ export function pageHref(pagePath) {
   return `/${pagePath}`;
 }
 
-export function extractIndexPage({ pagePath, html }) {
+export function extractIndexPage({ pagePath, html, section: sectionLabel }) {
   const scanned = scanHtml(html);
   const title = stripTags(scanned.tags.find((tag) => tag.name === 'title')?.content) || stripTags(scanned.tags.find((tag) => tag.name === 'h1')?.content) || pagePath;
   const headings = scanned.tags
@@ -267,7 +263,7 @@ export function extractIndexPage({ pagePath, html }) {
     try { data = JSON.parse(block.content); } catch { data = {}; }
   }
   const summary = typeof data.summary === 'string' ? data.summary : typeof data.description === 'string' ? data.description : '';
-  const section = headings[0]?.text ?? title;
+  const section = typeof sectionLabel === 'string' ? sectionLabel : (headings[0]?.text ?? title);
   const withoutSkipped = scanned.html.replace(/<(script|style|nav|footer)\b[\s\S]*?<\/\1>/gi, ' ');
   const visible = stripTags(withoutSkipped);
   const text = redactSecrets(`${title} ${section} ${headings.map((h) => h.text).join(' ')} ${summary} ${textFromData(data)} ${visible}`).replace(/\s+/g, ' ').trim().slice(0, INDEX_TEXT_LIMIT);

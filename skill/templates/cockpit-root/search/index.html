@@ -32,7 +32,7 @@
     </fieldset>
   </nav>
   <main class="page">
-    <div class="breadcrumbs"><a href="../">Cockpit</a><span class="sep">›</span><span class="here">Search</span></div>
+    <div class="breadcrumbs"><a href="../">Cockpit</a><span class="sep">/</span><span class="here">Search</span></div>
     <header class="masthead">
       <h1>Search</h1>
       <p>Static local search over the generated Cockpit index.</p>
@@ -91,9 +91,16 @@
         link.href = match.page.href;
         link.textContent = match.page.title;
         title.append(link);
+        card.append(title);
+        if (match.page.section) {
+          const section = document.createElement('p');
+          section.className = 'author';
+          section.textContent = match.page.section;
+          card.append(section);
+        }
         const summary = document.createElement('p');
-        summary.textContent = match.page.summary || match.page.section || match.page.path;
-        card.append(title, summary);
+        summary.textContent = match.page.summary || match.page.path;
+        card.append(summary);
         results.append(card);
       }
     };
