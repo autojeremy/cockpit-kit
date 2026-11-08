@@ -52,6 +52,11 @@ try {
     process.exit(0);
   }
   const { root } = resolveRoot({ argv: options.rootArgs, env: process.env, forWrite: !options.check, stderr: process.stderr });
+  if (!options.check) {
+    const holder = options.holder ?? (process.env.COCKPIT_LOCK_HOLDER || undefined);
+    if (holder !== undefined) validateHolder(holder);
+    await assertWriteAllowed(root, { holder, waitMs: options.lockWait === undefined ? 10_000 : parseDuration(options.lockWait, '--lock-wait'), stderr: process.stderr });
+  }
   const nav = readNavManifest(root);
   if (!nav.present) throw new Error('No .cockpit/nav.toml in the cockpit root');
   const file = path.join(root, 'index.html');
@@ -64,9 +69,6 @@ try {
     process.stdout.write('home-sync: index.html would change\n');
     process.exitCode = 1;
   } else {
-    const holder = options.holder ?? (process.env.COCKPIT_LOCK_HOLDER || undefined);
-    if (holder !== undefined) validateHolder(holder);
-    await assertWriteAllowed(root, { holder, waitMs: options.lockWait === undefined ? 10_000 : parseDuration(options.lockWait, '--lock-wait'), stderr: process.stderr });
     const temp = path.join(root, `.index.html.${process.pid}.tmp`);
     fs.writeFileSync(temp, next, 'utf8');
     fs.renameSync(temp, file);

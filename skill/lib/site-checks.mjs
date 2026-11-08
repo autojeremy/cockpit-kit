@@ -8,10 +8,20 @@ import { hasHomeCardMarkers, homeCards as navHomeCards, syncHomeHtml } from './h
 
 const externalPattern = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
 
+function attrValue(raw, name) {
+  const match = new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i').exec(raw);
+  return match ? decodeEntities(match[1] ?? match[2] ?? match[3] ?? '') : undefined;
+}
+
 export function isMovedStub(html) {
   const text = String(html ?? '');
   if (/<meta\s[^>]*name=["']cockpit:moved-to["']/i.test(text)) return true;
-  if (/<meta\s[^>]*http-equiv=["']refresh["']/i.test(text)) return true;
+  for (const meta of text.match(/<meta\b[^>]*>/gi) ?? []) {
+    if (attrValue(meta, 'http-equiv')?.toLowerCase() !== 'refresh') continue;
+    const content = attrValue(meta, 'content') ?? '';
+    const redirect = /(?:^|;)\s*url\s*=\s*(.*)$/i.exec(content)?.[1]?.trim();
+    if (redirect && redirect.replace(/^["']|["']$/g, '').trim()) return true;
+  }
   const block = /<script\b[^>]*id=["']cockpit-data["'][^>]*>([\s\S]*?)<\/script>/i.exec(text);
   if (block) {
     try {
@@ -76,10 +86,11 @@ function footerLinks(html) {
 function homeCards(html) {
   const main = /<main\b[\s\S]*?<\/main>/i.exec(html)?.[0] ?? html;
   const cards = [];
-  const pattern = /<a\b([^>]*\bclass="[^"]*\bcard\b[^"]*"[^>]*)>([\s\S]*?)<\/a>/gi;
+  const pattern = /<a\b([^>]*)>([\s\S]*?)<\/a>/gi;
   let match;
   while ((match = pattern.exec(main))) {
-    const href = /\shref\s*=\s*"([^"]*)"/i.exec(` ${match[1]}`)?.[1] ?? '';
+    if (!(attrValue(` ${match[1]}`, 'class') ?? '').split(/\s+/).includes('card')) continue;
+    const href = attrValue(` ${match[1]}`, 'href') ?? '';
     const title = stripText(/<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/i.exec(match[2])?.[1] ?? '');
     cards.push({ href, title });
   }
@@ -131,7 +142,13 @@ export function siteFindings({ root, pages, nav }) {
     let data;
     try { data = block ? JSON.parse(block[1]) : undefined; } catch { data = undefined; }
     if (data && Array.isArray(data.cards)) {
-      const expected = data.cards.map((card) => ({ href: normalizeCardHref(card.href), title: String(card.title ?? '').trim() }));
+      const cards = data.cards.filter((card, index) => {
+        if (card && typeof card === 'object' && !Array.isArray(card)
+          && typeof card.href === 'string' && typeof card.title === 'string') return true;
+        add('index.html', 'invalid-home-card', `Home cockpit-data.cards[${index}] must be an object with string href and title`);
+        return false;
+      });
+      const expected = cards.map((card) => ({ href: normalizeCardHref(card.href), title: card.title.trim() }));
       const actual = homeCards(home.html).map((card) => ({ href: normalizeCardHref(card.href), title: card.title }));
       if (JSON.stringify(expected) !== JSON.stringify(actual)) {
         const missing = expected.filter((e) => !actual.some((a) => a.href === e.href && a.title === e.title)).map((e) => `${e.title} (${e.href})`);
@@ -139,7 +156,7 @@ export function siteFindings({ root, pages, nav }) {
         const detail = [missing.length ? `in data only: ${missing.join(', ')}` : '', extra.length ? `visible only: ${extra.join(', ')}` : ''].filter(Boolean).join('; ') || 'card order differs';
         add('index.html', 'home-data-drift', `Home cockpit-data cards do not match the visible cards (${detail})`);
       }
-      for (const card of data.cards) {
+      for (const card of cards) {
         const target = resolveLink(root, 'index.html', card.href);
         if (target && !byPath.has(target)) add('index.html', 'home-data-drift', `Home card "${card.title}" points to ${card.href}, which does not exist`);
       }

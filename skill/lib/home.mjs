@@ -41,8 +41,8 @@ export function homeCards(root, items) {
 export function renderHomeCards(cards, indent = '    ') {
   const groups = [];
   for (const card of cards) {
-    let group = groups.find((entry) => entry.name === card.group);
-    if (!group) {
+    let group = groups.at(-1);
+    if (!group || group.name !== card.group) {
       group = { name: card.group, cards: [] };
       groups.push(group);
     }
