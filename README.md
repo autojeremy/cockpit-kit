@@ -2,8 +2,6 @@
 
 Cockpit Kit is a global AI skill and script kit for operating a local-first knowledge repo from any supported AI environment.
 
-It is an AI-agent local memory kit, not the Red Hat Cockpit Linux server administration console. The naming overlap is intentional for now, and this project is not affiliated with Red Hat Cockpit.
-
 ## What it does
 
 - Installs one canonical `SKILL.md` into supported AI environments.
