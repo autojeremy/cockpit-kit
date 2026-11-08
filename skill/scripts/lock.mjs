@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Advisory write lock for a Cockpit root shared by several agents.
 // See README "Multi-agent write lock" and skill/SKILL.md "Write Lock".
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import { ArgumentError, resolveRoot } from '../lib/config.mjs';
@@ -132,9 +132,20 @@ async function runCommand(root, options, { env, stdout, stderr }) {
   heartbeat.unref();
 
   const [file, ...args] = options.command;
-  const child = spawn(file, args, { stdio: 'inherit', env: { ...env, COCKPIT_LOCK_HOLDER: holder } });
+  // A separate process group keeps shell descendants under the same cancellation
+  // boundary. Commands that deliberately daemonize must not write under this lock.
+  const grouped = process.platform !== 'win32';
+  const child = spawn(file, args, { detached: grouped, stdio: 'inherit', env: { ...env, COCKPIT_LOCK_HOLDER: holder } });
   const signals = ['SIGINT', 'SIGTERM', 'SIGHUP'];
-  const forward = (signal) => { child.kill(signal); };
+  const forward = (signal) => {
+    if (!child.pid) return;
+    if (!grouped) {
+      // Windows has no POSIX groups; taskkill /T terminates the whole tree.
+      spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F']);
+      return;
+    }
+    try { process.kill(-child.pid, signal); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+  };
   for (const signal of signals) process.on(signal, forward);
   const exitCode = await new Promise((resolve) => {
     child.on('error', (error) => {
@@ -145,6 +156,26 @@ async function runCommand(root, options, { env, stdout, stderr }) {
       resolve(code ?? 128 + (signal ? ({ SIGHUP: 1, SIGINT: 2, SIGKILL: 9, SIGTERM: 15 }[signal] ?? 1) : 1));
     });
   });
+  // The immediate shell can exit before its workers handle the signal. Keep
+  // heartbeating (and forwarding repeated signals) until every live group member
+  // exits. Zombies cannot write and may await reaping by an unrelated parent.
+  if (grouped && child.pid) {
+    for (;;) {
+      const listing = spawnSync('ps', ['-eo', 'pgid=,stat='], { encoding: 'utf8' });
+      let alive;
+      if (listing.status === 0) {
+        alive = listing.stdout.split('\n').some((line) => {
+          const [group, state] = line.trim().split(/\s+/);
+          return Number(group) === child.pid && state && !state.startsWith('Z');
+        });
+      } else {
+        try { process.kill(-child.pid, 0); alive = true; }
+        catch (error) { if (error.code !== 'ESRCH') throw error; alive = false; }
+      }
+      if (!alive) break;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  }
   clearInterval(heartbeat);
   for (const signal of signals) process.off(signal, forward);
   if (ownsLock) {

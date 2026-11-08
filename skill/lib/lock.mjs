@@ -213,7 +213,7 @@ export function tryAcquire(root, { holder, purpose, ttlMs = DEFAULT_TTL_MS, pidB
     if (createExclusive(root, record)) return { acquired: true, lock: record };
     const existing = readLock(root);
     if (!existing) continue; // released between our attempt and read; retry
-    if (existing.holder === holder && !existing.corrupt) {
+    if (existing.holder === holder && !existing.corrupt && !staleReason(existing, rt)) {
       // Re-entrant: same holder renews instead of deadlocking on itself.
       const renewed = renewLock(root, { holder, ttlMs, purpose, ...options });
       if (renewed) return { acquired: true, lock: renewed, renewed: true };
@@ -249,7 +249,7 @@ export function renewLock(root, { holder, ttlMs = DEFAULT_TTL_MS, token, purpose
   const rt = runtime(options);
   return withGuard(root, () => {
     const current = readLock(root);
-    if (!current || current.corrupt || current.holder !== holder) return null;
+    if (!current || current.corrupt || current.holder !== holder || staleReason(current, rt)) return null;
     if (token && current.token !== token) return null;
     const { raw, ...base } = current;
     const next = { ...base, purpose: purpose ?? current.purpose ?? null, expires_at: new Date(rt.now() + ttlMs).toISOString() };
