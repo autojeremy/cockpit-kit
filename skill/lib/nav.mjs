@@ -98,15 +98,17 @@ export function groupItems(items) {
 export function renderNavItems(items, pagePath, indent = '      ') {
   const prefix = pagePrefix(pagePath);
   const current = expectedCurrentIndex(items, pagePath);
-  const link = ({ item, index }, pad) => `${pad}<a href="${escapeHtml(`${prefix}${item.href}`)}"${index === current ? ' aria-current="page"' : ''}>${escapeHtml(item.label)}</a>`;
+  const link = ({ item, index }, pad) => `${pad}<a href="${escapeHtml(/^(?:[a-z][a-z0-9+.-]*:|\/|#)/i.test(item.href) ? item.href : `${prefix}${item.href}`)}"${index === current ? ' aria-current="page"' : ''}>${escapeHtml(item.label)}</a>`;
   const lines = [];
+  let groupIndex = 0;
   for (const group of groupItems(items)) {
     if (!group.group) {
       for (const entry of group.items) lines.push(link(entry, indent));
       continue;
     }
-    lines.push(`${indent}<div class="nav-group" role="group" aria-labelledby="nav-group-${slug(group.group)}">`);
-    lines.push(`${indent}  <span class="nav-group-label" id="nav-group-${slug(group.group)}">${escapeHtml(group.group)}</span>`);
+    const groupId = `nav-group-${slug(group.group)}-${++groupIndex}`;
+    lines.push(`${indent}<div class="nav-group" role="group" aria-labelledby="${groupId}">`);
+    lines.push(`${indent}  <span class="nav-group-label" id="${groupId}">${escapeHtml(group.group)}</span>`);
     for (const entry of group.items) lines.push(link(entry, `${indent}  `));
     lines.push(`${indent}</div>`);
   }
@@ -168,8 +170,8 @@ export function syncNavHtml(html, items, pagePath) {
   // current marker on the root index when the manifest has no Home item.
   const fixBrand = (raw) => {
     const openEnd = raw.indexOf('>');
-    let open = raw.slice(0, openEnd + 1).replace(/\s+aria-current="[^"]*"/i, '');
-    open = open.replace(/\shref="[^"]*"/i, ` href="${prefix || './'}"`);
+    let open = raw.slice(0, openEnd + 1).replace(/\s+aria-current\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+    open = open.replace(/\shref\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/i, ` href="${prefix || './'}"`);
     if (isRootIndex && !hasHomeItem) open = open.replace(/>$/, ' aria-current="page">');
     return open + raw.slice(openEnd + 1);
   };

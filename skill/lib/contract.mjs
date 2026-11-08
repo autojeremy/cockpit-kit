@@ -202,6 +202,9 @@ export function checkPage({ pagePath, html, navItems, navManifestPresent = false
     const needsCurrent = !navManifestPresent || expectedIndex >= 0 || pagePath === 'index.html';
     if (currentCount === 0 && needsCurrent) warnings.push(finding('no-aria-current', 'No nav link has aria-current="page"'));
     if (currentCount > 1) warnings.push(finding('multiple-aria-current', 'More than one nav link has aria-current="page"'));
+    const currentHome = pagePath !== 'index.html'
+      && navLinks.find((link) => link.current && isHomeHref(resolvePageHref(link.href, pagePath)));
+    if (currentHome) warnings.push(finding('current-is-home', `Non-home page marks "${currentHome.label}" as the current nav item (run nav-sync.mjs)`));
     if (!navManifestPresent) warnings.push(finding('no-nav-manifest', 'No readable .cockpit/nav.toml for nav comparison'));
     else {
       const actual = items.map((link) => ({ label: link.label, href: resolvePageHref(link.href, pagePath), group: link.group ?? null }));
@@ -209,8 +212,7 @@ export function checkPage({ pagePath, html, navItems, navManifestPresent = false
       if (JSON.stringify(actual) !== JSON.stringify(expected)) warnings.push(finding('stale-nav', `Nav does not match manifest (run nav-sync.mjs); expected ${JSON.stringify(expectedForPage(navItems, pagePath))}`));
       else if (currentCount > 0) {
         const currentIndex = items.findIndex((link) => link.current);
-        if (pagePath !== 'index.html' && currentIndex >= 0 && isHomeHref(navItems[currentIndex].href)) warnings.push(finding('current-is-home', `Non-home page marks "${navItems[currentIndex].label}" as the current nav item (run nav-sync.mjs)`));
-        else if (currentIndex >= 0 && currentIndex !== expectedIndex) warnings.push(finding('wrong-aria-current', `Nav marks "${navItems[currentIndex].label}" current; expected ${expectedIndex >= 0 ? `"${navItems[expectedIndex].label}"` : 'no item'} for this page's section (run nav-sync.mjs)`));
+        if (!currentHome && currentIndex >= 0 && currentIndex !== expectedIndex) warnings.push(finding('wrong-aria-current', `Nav marks "${navItems[currentIndex].label}" current; expected ${expectedIndex >= 0 ? `"${navItems[expectedIndex].label}"` : 'no item'} for this page's section (run nav-sync.mjs)`));
       }
     }
   }
